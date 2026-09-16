@@ -61,11 +61,13 @@ make api           # 起服务 http://127.0.0.1:8000（--reload）
 
 ```bash
 npm install
+npm run db:init    # 本地嵌入式 PostgreSQL（首次）+ 导入内容
+npm run db:start   # 启动本地库（后台常驻）
 npm run dev        # http://localhost:3000（predev 会先生成内容产物）
 ```
 
-没有后端时，把 `.env.local.example` 复制成 `.env.local` 并打开
-`NEXT_PUBLIC_USE_MOCK=1`，UI 会用契约形状的 mock 数据独立跑起来。
+S5 起前端与 API 同源：页面数据全部走同源 `/api/v1/*`（Next Route Handler），
+不再需要单独起后端服务；`.env` 的 `MATH_DB_URL` 指向本地嵌入式 PG。
 
 ### 内容产物（Next 侧，迁移中）
 

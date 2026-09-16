@@ -13,6 +13,7 @@
     "stats:content": "tsx scripts/check-content.ts --stats",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu22.04-x64 playwright test",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",

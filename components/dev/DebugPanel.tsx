@@ -7,7 +7,6 @@ import { describeError } from "@/lib/api/errors";
 import { useApiResource } from "@/lib/hooks/useApiResource";
 import { useAppStore } from "@/lib/store/useAppStore";
 import { usePendingAttempts, retryPendingAttempts } from "@/lib/offline/usePendingAttempts";
-import { USE_MOCK } from "@/lib/config";
 import { IDLE_SUSPECT_MIN_MS, THINKING_NORMAL_MAX_MS } from "@/lib/telemetry/constants";
 import type { DebugSignalRow } from "@/lib/api/types";
 
@@ -54,7 +53,7 @@ export function DebugPanel() {
         <div className="max-h-[80vh] w-[min(92vw,460px)] overflow-y-auto rounded-2xl border border-slate-300 bg-white/97 p-3 shadow-xl backdrop-blur">
           <div className="mb-2 flex items-center gap-2">
             <span className="text-sm font-bold text-slate-700">
-              🐞 调试面板 {USE_MOCK ? "（MOCK）" : "(真实后端)"}
+              🐞 调试面板 (真实后端)
             </span>
             <button
               type="button"

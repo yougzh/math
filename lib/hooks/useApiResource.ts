@@ -13,8 +13,8 @@ export interface ApiResource<T> {
 /**
  * 客户端取数（所有页面都靠它）。
  *
- * 刻意不用构建期取数：没有后端时 `npm run build` 也必须成功，
- * 而且 mock 模式（NEXT_PUBLIC_USE_MOCK=1）只在运行时才有意义。
+ * 刻意不用构建期取数：没有数据库时 `npm run build` 也必须成功，
+ * 页面数据全部在运行时从同源 /api/v1/* 拉取。
  */
 export function useApiResource<T>(
   loader: () => Promise<T>,

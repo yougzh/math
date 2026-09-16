@@ -31,3 +31,7 @@ build/
 
 # vitest 输出
 .vitest/
+
+# Playwright 输出
+test-results/
+playwright-report/

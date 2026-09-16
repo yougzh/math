@@ -1,4 +1,4 @@
-import { API_BASE, REQUEST_TIMEOUT_MS, USE_MOCK } from "@/lib/config";
+import { REQUEST_TIMEOUT_MS } from "@/lib/config";
 import { ApiError, parseErrorBody } from "./errors";
 
 export type HttpMethod = "GET" | "POST";
@@ -36,7 +36,7 @@ async function realRequest<T>(
 
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, {
+    res = await fetch(path, {
       method,
       headers: body === undefined ? undefined : { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -74,26 +74,9 @@ async function realRequest<T>(
   return payload as T;
 }
 
-/**
- * 统一出口。
- * - NEXT_PUBLIC_USE_MOCK=1 → 走 lib/mock（严格按契约形状构造的示例数据）
- * - 否则 → 真实 HTTP（`/v1/...`）
- */
-export async function apiRequest<T>(
-  method: HttpMethod,
-  path: string,
-  body?: unknown,
-  opts?: RequestOptions,
-): Promise<T> {
-  if (USE_MOCK) {
-    const { handleMockRequest } = await import("@/lib/mock/handlers");
-    return handleMockRequest<T>(method, path, body);
-  }
-  return realRequest<T>(method, path, body, opts);
-}
-
+/** 统一出口：真实 HTTP（同源 `/api/v1/...`，Next Route Handler）。 */
 export const http = {
-  get: <T>(path: string, opts?: RequestOptions) => apiRequest<T>("GET", path, undefined, opts),
+  get: <T>(path: string, opts?: RequestOptions) => realRequest<T>("GET", path, undefined, opts),
   post: <T>(path: string, body?: unknown, opts?: RequestOptions) =>
-    apiRequest<T>("POST", path, body, opts),
+    realRequest<T>("POST", path, body, opts),
 };
