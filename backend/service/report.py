@@ -7,7 +7,7 @@
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List
 
 from backend.content.loader import ContentBundle
@@ -229,7 +229,10 @@ def report_payload(
 ) -> Dict[str, Any]:
     today = date.today()
     start_day = today - timedelta(days=max(1, days) - 1)
-    start = datetime.combine(start_day, datetime.min.time())
+    # start 钉成 aware UTC：与 timestamptz 读回的 created_at（aware）可比。
+    # 原来的 naive datetime 在 progress_events 里与 aware 相减会抛 TypeError
+    # （一旦窗口内存在升级事件整个报告就 500）；SQL 过滤的语义（UTC 解释）不变。
+    start = datetime.combine(start_day, datetime.min.time()).replace(tzinfo=timezone.utc)
 
     competencies = []
     for code in graph.topological_order():

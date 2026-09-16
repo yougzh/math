@@ -5,7 +5,7 @@
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, Query
@@ -101,7 +101,9 @@ def end_session(
     )
     if row is None:
         raise errors.session_missing(session_id)
-    now = datetime.utcnow()
+    # timestamptz 读回的 started_at 是 aware —— now 必须同为 aware，
+    # 否则 naive-aware 相减抛 TypeError（此前任何 end_session 都 500）
+    now = datetime.now(timezone.utc)
     row.ended_at = now
     if row.started_at is not None:
         delta = now - row.started_at

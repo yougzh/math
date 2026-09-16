@@ -1,0 +1,1689 @@
+{
+  "source": "python",
+  "db_url_label": "db_math_api_py",
+  "scenarios": [
+    {
+      "name": "health",
+      "method": "GET",
+      "path": "/health",
+      "query": {},
+      "body": null,
+      "status": 200,
+      "response": {
+        "ok": true
+      }
+    },
+    {
+      "name": "world",
+      "method": "GET",
+      "path": "/v1/world",
+      "query": {},
+      "body": null,
+      "status": 200,
+      "response": {
+        "child": {
+          "id": 1,
+          "name": "小明"
+        },
+        "today": {
+          "headline": "数字车站 · 第 1 站：好朋友",
+          "subtitle": "小熊站长第一天上站台，把遇见的人和东西合起来数一数。",
+          "story_code": "station_01_sd_add_10",
+          "universe_code": "number_station",
+          "estimated_minutes": 6,
+          "completed": false
+        },
+        "universes": [
+          {
+            "code": "number_station",
+            "name": "数字车站",
+            "emoji": "🚂",
+            "unlocked": true,
+            "progress": 0.0,
+            "stories": [
+              {
+                "code": "station_01_sd_add_10",
+                "title": "数字车站 · 第 1 站：好朋友",
+                "completed": false,
+                "unlocked": true
+              },
+              {
+                "code": "station_02_sd_sub_10",
+                "title": "数字车站 · 第 2 站：反着数",
+                "completed": false,
+                "unlocked": true
+              },
+              {
+                "code": "station_03_make_ten",
+                "title": "数字车站 · 第 3 站：凑十特快",
+                "completed": false,
+                "unlocked": true
+              },
+              {
+                "code": "station_04_place_value",
+                "title": "数字车站 · 第 4 站：号码牌",
+                "completed": false,
+                "unlocked": true
+              },
+              {
+                "code": "station_05_td_add_nocarry",
+                "title": "数字车站 · 第 5 站：两节车厢",
+                "completed": false,
+                "unlocked": true
+              },
+              {
+                "code": "station_06_td_sub_nocarry",
+                "title": "数字车站 · 第 6 站：下车的人",
+                "completed": false,
+                "unlocked": true
+              },
+              {
+                "code": "station_07_sd_add_20",
+                "title": "数字车站 · 第 7 站：装满一节",
+                "completed": false,
+                "unlocked": true
+              },
+              {
+                "code": "station_08_sd_sub_20",
+                "title": "数字车站 · 第 8 站：空出来的座位",
+                "completed": false,
+                "unlocked": true
+              },
+              {
+                "code": "station_09_carry_add",
+                "title": "数字车站 · 第 9 站：多出来的一个",
+                "completed": false,
+                "unlocked": true
+              },
+              {
+                "code": "station_10_borrow_sub",
+                "title": "数字车站 · 第 10 站：借一节车厢",
+                "completed": false,
+                "unlocked": true
+              }
+            ]
+          },
+          {
+            "code": "detective",
+            "name": "侦探社",
+            "emoji": "🦊",
+            "unlocked": false,
+            "progress": 0.0,
+            "stories": []
+          }
+        ],
+        "lab_unlocked": true,
+        "detective_unlocked": false,
+        "growth_summary": {
+          "materials": {
+            "wood": 0,
+            "coin": 0,
+            "gem": 0,
+            "seed": 0
+          },
+          "buildings": [],
+          "newest_badge": null
+        }
+      }
+    },
+    {
+      "name": "world_child_missing",
+      "method": "GET",
+      "path": "/v1/world",
+      "query": {
+        "child_id": "999"
+      },
+      "body": null,
+      "status": 404,
+      "response": {
+        "error": {
+          "code": "CHILD_NOT_FOUND",
+          "message": "孩子 999 不存在"
+        }
+      }
+    },
+    {
+      "name": "story",
+      "method": "GET",
+      "path": "/v1/stories/station_01_sd_add_10",
+      "query": {},
+      "body": null,
+      "status": 200,
+      "response": {
+        "code": "station_01_sd_add_10",
+        "universe": "number_station",
+        "title": "数字车站 · 第 1 站：好朋友",
+        "summary": "小熊站长第一天上站台，把遇见的人和东西合起来数一数。",
+        "duration_min": 6,
+        "order_index": 1,
+        "beats": [
+          {
+            "index": 1,
+            "sequence": 1,
+            "code": "station_01_sd_add_10__b1",
+            "type": "narration",
+            "narration": "天亮了，数字车站的灯一盏一盏亮起来。小熊站长戴上帽子，站在站台上等头一班车。",
+            "text": "天亮了，数字车站的灯一盏一盏亮起来。小熊站长戴上帽子，站在站台上等头一班车。",
+            "character": "小熊站长",
+            "slot_code": null,
+            "visual": {
+              "kind": "station",
+              "mood": "calm",
+              "characters": [
+                "小熊站长"
+              ]
+            },
+            "reward": null,
+            "challenge": null
+          },
+          {
+            "index": 2,
+            "sequence": 2,
+            "code": "station_01_sd_add_10__b2",
+            "type": "challenge",
+            "narration": "站台的长椅左边坐着一群小乘客，右边也坐着一群。两边合起来，一共坐着几位呢？",
+            "text": "站台的长椅左边坐着一群小乘客，右边也坐着一群。两边合起来，一共坐着几位呢？",
+            "character": "",
+            "slot_code": "st01_b2_sd_add_10",
+            "visual": {
+              "kind": "station",
+              "mood": "calm",
+              "characters": []
+            },
+            "reward": null,
+            "challenge": {
+              "slot_code": "st01_b2_sd_add_10",
+              "purpose": "story",
+              "scaffold_level": "blocks",
+              "item": {
+                "code": "s10b_2_1",
+                "competency": "sd_add_10",
+                "pattern": "combine",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 14,
+                "prompt": "摆出 2 个圆片，再摆出 1 个。一共是多少个？",
+                "problem": {
+                  "a": 2,
+                  "b": 1,
+                  "target": 10
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 1
+              }
+            }
+          },
+          {
+            "index": 3,
+            "sequence": 3,
+            "code": "station_01_sd_add_10__b3",
+            "type": "narration",
+            "narration": "小猫滴滴跑过来，蹲在站长脚边，尾巴摇得像一面小旗子。",
+            "text": "小猫滴滴跑过来，蹲在站长脚边，尾巴摇得像一面小旗子。",
+            "character": "小猫滴滴",
+            "slot_code": null,
+            "visual": {
+              "kind": "station",
+              "mood": "calm",
+              "characters": [
+                "小猫滴滴"
+              ]
+            },
+            "reward": null,
+            "challenge": null
+          },
+          {
+            "index": 4,
+            "sequence": 4,
+            "code": "station_01_sd_add_10__b4",
+            "type": "challenge",
+            "narration": "滴滴的篮子里装着皮球，左边一堆，右边一堆。两堆放在一起，一共有多少个球？",
+            "text": "滴滴的篮子里装着皮球，左边一堆，右边一堆。两堆放在一起，一共有多少个球？",
+            "character": "",
+            "slot_code": "st01_b4_sd_add_10",
+            "visual": {
+              "kind": "station",
+              "mood": "calm",
+              "characters": []
+            },
+            "reward": null,
+            "challenge": {
+              "slot_code": "st01_b4_sd_add_10",
+              "purpose": "story",
+              "scaffold_level": "blocks",
+              "item": {
+                "code": "s10b_2_1",
+                "competency": "sd_add_10",
+                "pattern": "combine",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 14,
+                "prompt": "摆出 2 个圆片，再摆出 1 个。一共是多少个？",
+                "problem": {
+                  "a": 2,
+                  "b": 1,
+                  "target": 10
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 1
+              }
+            }
+          },
+          {
+            "index": 5,
+            "sequence": 5,
+            "code": "station_01_sd_add_10__b5",
+            "type": "narration",
+            "narration": "行李员阿吉推着小车过来了，车上放着两只木箱，箱子晃呀晃。",
+            "text": "行李员阿吉推着小车过来了，车上放着两只木箱，箱子晃呀晃。",
+            "character": "行李员阿吉",
+            "slot_code": null,
+            "visual": {
+              "kind": "station",
+              "mood": "calm",
+              "characters": [
+                "行李员阿吉"
+              ]
+            },
+            "reward": null,
+            "challenge": null
+          },
+          {
+            "index": 6,
+            "sequence": 6,
+            "code": "station_01_sd_add_10__b6",
+            "type": "challenge",
+            "narration": "阿吉把箱里的东西摆在台子上，左边一堆橘子，右边一堆面包。合起来一共有多少？",
+            "text": "阿吉把箱里的东西摆在台子上，左边一堆橘子，右边一堆面包。合起来一共有多少？",
+            "character": "",
+            "slot_code": "st01_b6_sd_add_10",
+            "visual": {
+              "kind": "station",
+              "mood": "calm",
+              "characters": []
+            },
+            "reward": null,
+            "challenge": {
+              "slot_code": "st01_b6_sd_add_10",
+              "purpose": "story",
+              "scaffold_level": "blocks",
+              "item": {
+                "code": "s10b_2_1",
+                "competency": "sd_add_10",
+                "pattern": "combine",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 14,
+                "prompt": "摆出 2 个圆片，再摆出 1 个。一共是多少个？",
+                "problem": {
+                  "a": 2,
+                  "b": 1,
+                  "target": 10
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 1
+              }
+            }
+          },
+          {
+            "index": 7,
+            "sequence": 7,
+            "code": "station_01_sd_add_10__b7",
+            "type": "reward",
+            "narration": "小熊站长笑了：“车站的早晨真热闹。”他把每个人的名字都记在小本子上。",
+            "text": "小熊站长笑了：“车站的早晨真热闹。”他把每个人的名字都记在小本子上。",
+            "character": "小熊站长",
+            "slot_code": null,
+            "visual": {
+              "kind": "station",
+              "mood": "calm",
+              "characters": [
+                "小熊站长"
+              ]
+            },
+            "reward": null,
+            "challenge": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "story_missing",
+      "method": "GET",
+      "path": "/v1/stories/__no_such_story__",
+      "query": {},
+      "body": null,
+      "status": 404,
+      "response": {
+        "error": {
+          "code": "STORY_NOT_FOUND",
+          "message": "故事 __no_such_story__ 不存在"
+        }
+      }
+    },
+    {
+      "name": "lab",
+      "method": "GET",
+      "path": "/v1/lab",
+      "query": {},
+      "body": null,
+      "status": 200,
+      "response": {
+        "experiments": [
+          {
+            "code": "blocks",
+            "name": "数字积木",
+            "emoji": "🧱",
+            "description": "把一个数摆成几个十和几个一",
+            "component": "blocks_lab",
+            "unlocked": true
+          },
+          {
+            "code": "decompose",
+            "name": "拆分数字",
+            "emoji": "✂️",
+            "description": "23 可以拆成 20 和 3，也可以拆成别的",
+            "component": "decompose_lab",
+            "unlocked": true
+          },
+          {
+            "code": "make_ten",
+            "name": "凑十",
+            "emoji": "🔟",
+            "description": "把两个数里的一个补满到 10，看看会剩下什么",
+            "component": "make_ten_lab",
+            "unlocked": true
+          },
+          {
+            "code": "place_value_train",
+            "name": "十位小火车",
+            "emoji": "🚃",
+            "description": "十位车厢和个位车厢分开跑",
+            "component": "place_value_train_lab",
+            "unlocked": false
+          },
+          {
+            "code": "carry_exchange",
+            "name": "进位交换",
+            "emoji": "🔁",
+            "description": "10 个一换 1 个十，看看车厢怎么变",
+            "component": "carry_exchange_lab",
+            "unlocked": false
+          },
+          {
+            "code": "borrow_exchange",
+            "name": "退位交换",
+            "emoji": "🔓",
+            "description": "拆开 1 个十，换成 10 个一",
+            "component": "borrow_exchange_lab",
+            "unlocked": false
+          },
+          {
+            "code": "shape_build",
+            "name": "图形搭建",
+            "emoji": "🔺",
+            "description": "用小棒搭出各种图形（为几何做准备）",
+            "component": "shape_build_lab",
+            "unlocked": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "growth",
+      "method": "GET",
+      "path": "/v1/growth",
+      "query": {},
+      "body": null,
+      "status": 200,
+      "response": {
+        "tree": {
+          "nodes": [
+            {
+              "code": "place_value",
+              "name": "十位与个位",
+              "level": "encountering",
+              "level_label": "🌱 接触",
+              "mastered": false,
+              "emoji": "🚃",
+              "unlocked": true,
+              "position": {
+                "x": 0,
+                "y": 1
+              }
+            },
+            {
+              "code": "sd_sub_10",
+              "name": "10 以内减法",
+              "level": "encountering",
+              "level_label": "🌱 接触",
+              "mastered": false,
+              "emoji": "➖",
+              "unlocked": true,
+              "position": {
+                "x": 1,
+                "y": 1
+              }
+            },
+            {
+              "code": "td_sub_nocarry",
+              "name": "两位数减法（不退位）",
+              "level": "encountering",
+              "level_label": "🌱 接触",
+              "mastered": false,
+              "emoji": "📉",
+              "unlocked": true,
+              "position": {
+                "x": 2,
+                "y": 1
+              }
+            },
+            {
+              "code": "borrow_sub",
+              "name": "退位减法",
+              "level": "encountering",
+              "level_label": "🌱 接触",
+              "mastered": false,
+              "emoji": "🔄",
+              "unlocked": true,
+              "position": {
+                "x": 3,
+                "y": 1
+              }
+            },
+            {
+              "code": "sd_add_10",
+              "name": "10 以内加法",
+              "level": "encountering",
+              "level_label": "🌱 接触",
+              "mastered": false,
+              "emoji": "➕",
+              "unlocked": true,
+              "position": {
+                "x": 4,
+                "y": 1
+              }
+            },
+            {
+              "code": "make_ten",
+              "name": "凑十",
+              "level": "encountering",
+              "level_label": "🌱 接触",
+              "mastered": false,
+              "emoji": "🔟",
+              "unlocked": true,
+              "position": {
+                "x": 5,
+                "y": 1
+              }
+            },
+            {
+              "code": "td_add_nocarry",
+              "name": "两位数加法（不进位）",
+              "level": "encountering",
+              "level_label": "🌱 接触",
+              "mastered": false,
+              "emoji": "🧮",
+              "unlocked": true,
+              "position": {
+                "x": 6,
+                "y": 1
+              }
+            },
+            {
+              "code": "carry_add",
+              "name": "进位加法",
+              "level": "encountering",
+              "level_label": "🌱 接触",
+              "mastered": false,
+              "emoji": "🔁",
+              "unlocked": true,
+              "position": {
+                "x": 7,
+                "y": 1
+              }
+            },
+            {
+              "code": "sd_add_20",
+              "name": "20 以内加法",
+              "level": "encountering",
+              "level_label": "🌱 接触",
+              "mastered": false,
+              "emoji": "🔢",
+              "unlocked": true,
+              "position": {
+                "x": 8,
+                "y": 1
+              }
+            },
+            {
+              "code": "sd_sub_20",
+              "name": "20 以内减法",
+              "level": "encountering",
+              "level_label": "🌱 接触",
+              "mastered": false,
+              "emoji": "🔽",
+              "unlocked": true,
+              "position": {
+                "x": 9,
+                "y": 1
+              }
+            }
+          ],
+          "edges": [
+            {
+              "from": "place_value",
+              "to": "td_sub_nocarry"
+            },
+            {
+              "from": "sd_sub_10",
+              "to": "td_sub_nocarry"
+            },
+            {
+              "from": "td_sub_nocarry",
+              "to": "borrow_sub"
+            },
+            {
+              "from": "place_value",
+              "to": "borrow_sub"
+            },
+            {
+              "from": "sd_add_10",
+              "to": "make_ten"
+            },
+            {
+              "from": "place_value",
+              "to": "td_add_nocarry"
+            },
+            {
+              "from": "sd_add_10",
+              "to": "td_add_nocarry"
+            },
+            {
+              "from": "td_add_nocarry",
+              "to": "carry_add"
+            },
+            {
+              "from": "make_ten",
+              "to": "carry_add"
+            },
+            {
+              "from": "place_value",
+              "to": "carry_add"
+            },
+            {
+              "from": "sd_add_10",
+              "to": "sd_add_20"
+            },
+            {
+              "from": "make_ten",
+              "to": "sd_add_20"
+            },
+            {
+              "from": "sd_sub_10",
+              "to": "sd_sub_20"
+            }
+          ]
+        },
+        "materials": {
+          "wood": 0,
+          "coin": 0,
+          "gem": 0,
+          "seed": 0
+        },
+        "buildings": [
+          {
+            "code": "ticket_booth",
+            "name": "售票亭",
+            "emoji": "🎫",
+            "built": false,
+            "cost": {
+              "wood": 5,
+              "coin": 2
+            }
+          },
+          {
+            "code": "platform",
+            "name": "站台",
+            "emoji": "🛤️",
+            "built": false,
+            "cost": {
+              "wood": 10,
+              "coin": 5
+            }
+          }
+        ],
+        "badges": [
+          {
+            "code": "first_make_ten",
+            "name": "第一次凑十",
+            "emoji": "🎖️",
+            "earned": false,
+            "earned_at": null
+          },
+          {
+            "code": "first_carry",
+            "name": "第一次进位",
+            "emoji": "🚃",
+            "earned": false,
+            "earned_at": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "parent_report",
+      "method": "GET",
+      "path": "/v1/parent/report",
+      "query": {},
+      "body": null,
+      "status": 200,
+      "response": {
+        "child": {
+          "id": 1,
+          "name": "小明"
+        },
+        "range": {
+          "days": 7,
+          "from": "2026-09-10",
+          "to": "2026-09-16"
+        },
+        "headline": "本周学习状态平稳，继续保持每天 10～15 分钟。",
+        "competencies": [],
+        "weak_points": [],
+        "misconceptions": [],
+        "progress": [],
+        "engagement": {
+          "sessions": 0,
+          "total_minutes": 0.0,
+          "avg_minutes_per_session": 0.0,
+          "next_day_return_rate": 0.0,
+          "story_completion_rate": 0.0
+        },
+        "advice": [
+          "每天 10～15 分钟即可，不要延长。",
+          "可以让孩子当小老师，把今天学的方法讲一遍。"
+        ],
+        "disclaimer": "数据来自孩子在应用内的真实作答，仅供家庭参考，不作为学业评价。"
+      }
+    },
+    {
+      "name": "parent_report_bad_days",
+      "method": "GET",
+      "path": "/v1/parent/report",
+      "query": {
+        "days": "0"
+      },
+      "body": null,
+      "status": 400,
+      "response": {
+        "error": {
+          "code": "INVALID_PARAM",
+          "message": "请求参数不合法: query.days: Input should be greater than or equal to 1"
+        }
+      }
+    },
+    {
+      "name": "plans_today",
+      "method": "GET",
+      "path": "/v1/plans/today",
+      "query": {},
+      "body": null,
+      "status": 200,
+      "response": {
+        "child_id": 1,
+        "budget_minutes": 12,
+        "intents": [
+          {
+            "kind": "teach",
+            "competency": "place_value",
+            "reason": "当前聚焦能力尚未达标"
+          },
+          {
+            "kind": "story",
+            "competency": "place_value",
+            "reason": "故事训练《数字车站 · 第 4 站：号码牌》：把十位与个位放进故事里练"
+          }
+        ],
+        "segments": [
+          {
+            "type": "warmup",
+            "budget_s": 108,
+            "intent_kinds": [],
+            "slot_code": null,
+            "scaffold_level": null,
+            "story_code": null,
+            "beats": [],
+            "items": [],
+            "note": "本段今日无意图"
+          },
+          {
+            "type": "core",
+            "budget_s": 216,
+            "intent_kinds": [
+              "teach"
+            ],
+            "slot_code": "core_place_value_practice",
+            "scaffold_level": "blocks",
+            "story_code": null,
+            "beats": [],
+            "items": [
+              {
+                "code": "pv_o_12",
+                "competency": "place_value",
+                "pattern": "represent_place_value",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 20,
+                "prompt": "12 里面有几个一？",
+                "problem": {
+                  "a": 12,
+                  "ask": "ones"
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 2
+              },
+              {
+                "code": "pv_o_15",
+                "competency": "place_value",
+                "pattern": "represent_place_value",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 20,
+                "prompt": "15 里面有几个一？",
+                "problem": {
+                  "a": 15,
+                  "ask": "ones"
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 2
+              },
+              {
+                "code": "pv_o_18",
+                "competency": "place_value",
+                "pattern": "represent_place_value",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 20,
+                "prompt": "18 里面有几个一？",
+                "problem": {
+                  "a": 18,
+                  "ask": "ones"
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 2
+              }
+            ],
+            "note": ""
+          },
+          {
+            "type": "story",
+            "budget_s": 216,
+            "intent_kinds": [
+              "story"
+            ],
+            "slot_code": null,
+            "scaffold_level": null,
+            "story_code": "station_04_place_value",
+            "beats": [
+              {
+                "beat_code": "station_04_place_value__b2",
+                "slot_code": "st04_b2_place_value",
+                "item_code": "pv_o_21"
+              },
+              {
+                "beat_code": "station_04_place_value__b4",
+                "slot_code": "st04_b4_place_value",
+                "item_code": "pv_o_23"
+              },
+              {
+                "beat_code": "station_04_place_value__b6",
+                "slot_code": "st04_b6_place_value",
+                "item_code": "pv_o_25"
+              }
+            ],
+            "items": [
+              {
+                "code": "pv_o_21",
+                "competency": "place_value",
+                "pattern": "represent_place_value",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 20,
+                "prompt": "21 里面有几个一？",
+                "problem": {
+                  "a": 21,
+                  "ask": "ones"
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 2
+              },
+              {
+                "code": "pv_o_23",
+                "competency": "place_value",
+                "pattern": "represent_place_value",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 20,
+                "prompt": "23 里面有几个一？",
+                "problem": {
+                  "a": 23,
+                  "ask": "ones"
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 2
+              },
+              {
+                "code": "pv_o_25",
+                "competency": "place_value",
+                "pattern": "represent_place_value",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 20,
+                "prompt": "25 里面有几个一？",
+                "problem": {
+                  "a": 25,
+                  "ask": "ones"
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 2
+              }
+            ],
+            "note": ""
+          },
+          {
+            "type": "thinking",
+            "budget_s": 130,
+            "intent_kinds": [],
+            "slot_code": null,
+            "scaffold_level": null,
+            "story_code": null,
+            "beats": [],
+            "items": [],
+            "note": "本段今日无意图"
+          },
+          {
+            "type": "discovery",
+            "budget_s": 50,
+            "intent_kinds": [],
+            "slot_code": null,
+            "scaffold_level": null,
+            "story_code": null,
+            "beats": [],
+            "items": [],
+            "note": ""
+          }
+        ],
+        "discovery": "今天你发现了：十位与个位 不止一种算法，找到自己最快的那一种。",
+        "notes": []
+      }
+    },
+    {
+      "name": "session_create",
+      "method": "POST",
+      "path": "/v1/sessions",
+      "query": {},
+      "body": {
+        "planned_minutes": 15,
+        "device": "parity"
+      },
+      "status": 200,
+      "response": {
+        "session_id": 1,
+        "started_at": "<ISO>"
+      }
+    },
+    {
+      "name": "session_end",
+      "method": "POST",
+      "path": "/v1/sessions/1/end",
+      "query": {},
+      "body": {
+        "quit_reason": "parity"
+      },
+      "status": 200,
+      "response": {
+        "ok": true
+      }
+    },
+    {
+      "name": "session_end_missing",
+      "method": "POST",
+      "path": "/v1/sessions/999999/end",
+      "query": {},
+      "body": {},
+      "status": 404,
+      "response": {
+        "error": {
+          "code": "SESSION_NOT_FOUND",
+          "message": "会话 999999 不存在"
+        }
+      }
+    },
+    {
+      "name": "plans_today_with_session",
+      "method": "GET",
+      "path": "/v1/plans/today",
+      "query": {
+        "session_id": "1"
+      },
+      "body": null,
+      "status": 200,
+      "response": {
+        "child_id": 1,
+        "budget_minutes": 15,
+        "intents": [
+          {
+            "kind": "teach",
+            "competency": "place_value",
+            "reason": "当前聚焦能力尚未达标"
+          },
+          {
+            "kind": "story",
+            "competency": "place_value",
+            "reason": "故事训练《数字车站 · 第 4 站：号码牌》：把十位与个位放进故事里练"
+          }
+        ],
+        "segments": [
+          {
+            "type": "warmup",
+            "budget_s": 135,
+            "intent_kinds": [],
+            "slot_code": null,
+            "scaffold_level": null,
+            "story_code": null,
+            "beats": [],
+            "items": [],
+            "note": "本段今日无意图"
+          },
+          {
+            "type": "core",
+            "budget_s": 270,
+            "intent_kinds": [
+              "teach"
+            ],
+            "slot_code": "core_place_value_practice",
+            "scaffold_level": "blocks",
+            "story_code": null,
+            "beats": [],
+            "items": [
+              {
+                "code": "pv_o_12",
+                "competency": "place_value",
+                "pattern": "represent_place_value",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 20,
+                "prompt": "12 里面有几个一？",
+                "problem": {
+                  "a": 12,
+                  "ask": "ones"
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 2
+              },
+              {
+                "code": "pv_o_15",
+                "competency": "place_value",
+                "pattern": "represent_place_value",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 20,
+                "prompt": "15 里面有几个一？",
+                "problem": {
+                  "a": 15,
+                  "ask": "ones"
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 2
+              },
+              {
+                "code": "pv_o_18",
+                "competency": "place_value",
+                "pattern": "represent_place_value",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 20,
+                "prompt": "18 里面有几个一？",
+                "problem": {
+                  "a": 18,
+                  "ask": "ones"
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 2
+              }
+            ],
+            "note": ""
+          },
+          {
+            "type": "story",
+            "budget_s": 270,
+            "intent_kinds": [
+              "story"
+            ],
+            "slot_code": null,
+            "scaffold_level": null,
+            "story_code": "station_04_place_value",
+            "beats": [
+              {
+                "beat_code": "station_04_place_value__b2",
+                "slot_code": "st04_b2_place_value",
+                "item_code": "pv_o_21"
+              },
+              {
+                "beat_code": "station_04_place_value__b4",
+                "slot_code": "st04_b4_place_value",
+                "item_code": "pv_o_23"
+              },
+              {
+                "beat_code": "station_04_place_value__b6",
+                "slot_code": "st04_b6_place_value",
+                "item_code": "pv_o_25"
+              }
+            ],
+            "items": [
+              {
+                "code": "pv_o_21",
+                "competency": "place_value",
+                "pattern": "represent_place_value",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 20,
+                "prompt": "21 里面有几个一？",
+                "problem": {
+                  "a": 21,
+                  "ask": "ones"
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 2
+              },
+              {
+                "code": "pv_o_23",
+                "competency": "place_value",
+                "pattern": "represent_place_value",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 20,
+                "prompt": "23 里面有几个一？",
+                "problem": {
+                  "a": 23,
+                  "ask": "ones"
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 2
+              },
+              {
+                "code": "pv_o_25",
+                "competency": "place_value",
+                "pattern": "represent_place_value",
+                "difficulty": 1,
+                "scaffold_level": "blocks",
+                "interaction_type": "blocks",
+                "estimated_seconds": 20,
+                "prompt": "25 里面有几个一？",
+                "problem": {
+                  "a": 25,
+                  "ask": "ones"
+                },
+                "answer_type": "number",
+                "choices": null,
+                "hints_available": 2
+              }
+            ],
+            "note": ""
+          },
+          {
+            "type": "thinking",
+            "budget_s": 162,
+            "intent_kinds": [],
+            "slot_code": null,
+            "scaffold_level": null,
+            "story_code": null,
+            "beats": [],
+            "items": [],
+            "note": "本段今日无意图"
+          },
+          {
+            "type": "discovery",
+            "budget_s": 63,
+            "intent_kinds": [],
+            "slot_code": null,
+            "scaffold_level": null,
+            "story_code": null,
+            "beats": [],
+            "items": [],
+            "note": ""
+          }
+        ],
+        "discovery": "今天你发现了：十位与个位 不止一种算法，找到自己最快的那一种。",
+        "notes": []
+      }
+    },
+    {
+      "name": "attempt_create",
+      "method": "POST",
+      "path": "/v1/attempts",
+      "query": {},
+      "body": {
+        "client_attempt_id": "11111111-1111-4111-8111-111111111111",
+        "child_id": 1,
+        "item_code": "pv_o_12",
+        "answer": "0",
+        "telemetry": {
+          "response_time_ms": 5000,
+          "active_time_ms": 3000,
+          "idle_time_ms": 500
+        },
+        "hints_used": 0
+      },
+      "status": 200,
+      "response": {
+        "attempt_id": 1,
+        "seq": 1,
+        "duplicate": false,
+        "correct": false,
+        "judgement_mismatch": false,
+        "misconceptions": [],
+        "feedback": {
+          "tone": "repair",
+          "text": "我们换个办法，先把题目读一遍再算。",
+          "character": "小助手"
+        },
+        "reward": {
+          "materials": [
+            {
+              "code": "wood",
+              "count": 1
+            }
+          ],
+          "coins": 1,
+          "unlocks": []
+        },
+        "progress": {
+          "competency": "place_value",
+          "level": "encountering",
+          "level_label": "🌱 接触",
+          "scaffold_level": "blocks",
+          "signals": {
+            "mastery": 0.0,
+            "accuracy": 0.0,
+            "fluency": null,
+            "independence": 1.0,
+            "transfer": null
+          },
+          "sample_count": 1
+        },
+        "next": {
+          "kind": "next_item",
+          "beat_index": null,
+          "item": null
+        }
+      }
+    },
+    {
+      "name": "attempt_duplicate",
+      "method": "POST",
+      "path": "/v1/attempts",
+      "query": {},
+      "body": {
+        "client_attempt_id": "11111111-1111-4111-8111-111111111111",
+        "child_id": 1,
+        "item_code": "pv_o_12",
+        "answer": "0",
+        "telemetry": {
+          "response_time_ms": 5000,
+          "active_time_ms": 3000,
+          "idle_time_ms": 500
+        },
+        "hints_used": 0
+      },
+      "status": 200,
+      "response": {
+        "attempt_id": 1,
+        "seq": 1,
+        "duplicate": true,
+        "correct": false,
+        "judgement_mismatch": false,
+        "misconceptions": [],
+        "feedback": {
+          "tone": "repair",
+          "text": "我们换个办法，先把题目读一遍再算。",
+          "character": "小助手"
+        },
+        "reward": {
+          "materials": [
+            {
+              "code": "wood",
+              "count": 1
+            }
+          ],
+          "coins": 1,
+          "unlocks": []
+        },
+        "progress": {
+          "competency": "place_value",
+          "level": "encountering",
+          "level_label": "🌱 接触",
+          "scaffold_level": "blocks",
+          "signals": {
+            "mastery": 0.0,
+            "accuracy": 0.0,
+            "fluency": null,
+            "independence": 1.0,
+            "transfer": null
+          },
+          "sample_count": 1
+        },
+        "next": {
+          "kind": "next_item",
+          "beat_index": null,
+          "item": null
+        }
+      }
+    },
+    {
+      "name": "attempt_second",
+      "method": "POST",
+      "path": "/v1/attempts",
+      "query": {},
+      "body": {
+        "client_attempt_id": "22222222-2222-4222-8222-222222222222",
+        "child_id": 1,
+        "item_code": "pv_o_12",
+        "answer": "0",
+        "telemetry": {
+          "response_time_ms": 5000,
+          "active_time_ms": 3000,
+          "idle_time_ms": 500
+        },
+        "hints_used": 0
+      },
+      "status": 200,
+      "response": {
+        "attempt_id": 2,
+        "seq": 2,
+        "duplicate": false,
+        "correct": false,
+        "judgement_mismatch": false,
+        "misconceptions": [],
+        "feedback": {
+          "tone": "repair",
+          "text": "往回退一步。我们回到第一步看看。",
+          "character": "小助手"
+        },
+        "reward": {
+          "materials": [
+            {
+              "code": "wood",
+              "count": 1
+            }
+          ],
+          "coins": 1,
+          "unlocks": []
+        },
+        "progress": {
+          "competency": "place_value",
+          "level": "encountering",
+          "level_label": "🌱 接触",
+          "scaffold_level": "blocks",
+          "signals": {
+            "mastery": 0.0,
+            "accuracy": 0.0,
+            "fluency": null,
+            "independence": 1.0,
+            "transfer": null
+          },
+          "sample_count": 2
+        },
+        "next": {
+          "kind": "next_item",
+          "beat_index": null,
+          "item": null
+        }
+      }
+    },
+    {
+      "name": "attempt_item_missing",
+      "method": "POST",
+      "path": "/v1/attempts",
+      "query": {},
+      "body": {
+        "client_attempt_id": "33333333-3333-4333-8333-333333333333",
+        "child_id": 1,
+        "item_code": "__no_such_item__",
+        "answer": "0",
+        "telemetry": {
+          "response_time_ms": 5000,
+          "active_time_ms": 3000,
+          "idle_time_ms": 500
+        }
+      },
+      "status": 404,
+      "response": {
+        "error": {
+          "code": "ITEM_NOT_FOUND",
+          "message": "__no_such_item__ 不存在"
+        }
+      }
+    },
+    {
+      "name": "attempt_telemetry_inconsistent",
+      "method": "POST",
+      "path": "/v1/attempts",
+      "query": {},
+      "body": {
+        "client_attempt_id": "44444444-4444-4444-8444-444444444444",
+        "child_id": 1,
+        "item_code": "pv_o_12",
+        "answer": "0",
+        "telemetry": {
+          "response_time_ms": 5000,
+          "active_time_ms": 4000,
+          "idle_time_ms": 2000
+        }
+      },
+      "status": 400,
+      "response": {
+        "error": {
+          "code": "INVALID_PARAM",
+          "message": "请求参数不合法: body.telemetry: Value error, active_time_ms + idle_time_ms 不能大于 response_time_ms"
+        }
+      }
+    },
+    {
+      "name": "coach_hint",
+      "method": "POST",
+      "path": "/v1/coach/hints",
+      "query": {},
+      "body": {
+        "item_code": "pv_o_12",
+        "hints_used": 1
+      },
+      "status": 200,
+      "response": {
+        "hint_level": 2,
+        "hint_text": "个位是最右边那一位",
+        "source": "rule",
+        "fallback_used": false,
+        "exhausted": false
+      }
+    },
+    {
+      "name": "coach_hint_item_missing",
+      "method": "POST",
+      "path": "/v1/coach/hints",
+      "query": {},
+      "body": {
+        "item_code": "__no_such_item__"
+      },
+      "status": 404,
+      "response": {
+        "error": {
+          "code": "ITEM_NOT_FOUND",
+          "message": "__no_such_item__ 不存在"
+        }
+      }
+    },
+    {
+      "name": "detective_puzzle",
+      "method": "GET",
+      "path": "/v1/detective/puzzle",
+      "query": {},
+      "body": null,
+      "status": 200,
+      "response": {
+        "puzzle_id": "det_1002",
+        "kind": "guess_number",
+        "prompt": "我想了一个数字。",
+        "clues": [
+          {
+            "text": "它大于 20",
+            "revealed": true
+          },
+          {
+            "text": "它是偶数",
+            "revealed": true
+          },
+          {
+            "text": "它小于 90",
+            "revealed": false
+          },
+          {
+            "text": "它的个位是 2",
+            "revealed": false
+          },
+          {
+            "text": "它的十位是 8",
+            "revealed": false
+          }
+        ],
+        "candidates": [
+          72,
+          82,
+          92
+        ],
+        "answer_type": "number",
+        "clues_remaining": 3
+      }
+    },
+    {
+      "name": "detective_answer",
+      "method": "POST",
+      "path": "/v1/detective/answer",
+      "query": {},
+      "body": {
+        "puzzle_id": "det_1002",
+        "answer": "999999"
+      },
+      "status": 200,
+      "response": {
+        "correct": false,
+        "feedback": {
+          "tone": "repair",
+          "text": "再想想，还有线索没有用上哦。",
+          "character": "小助手"
+        },
+        "revealed_clues": [
+          "它小于 90"
+        ],
+        "reward": {
+          "materials": [],
+          "coins": 0,
+          "unlocks": []
+        }
+      }
+    },
+    {
+      "name": "growth_build_insufficient",
+      "method": "POST",
+      "path": "/v1/growth/build",
+      "query": {},
+      "body": {
+        "building_code": "ticket_booth"
+      },
+      "status": 200,
+      "response": {
+        "built": false,
+        "reason": "材料不足",
+        "materials": {
+          "wood": 2,
+          "coin": 2,
+          "gem": 0,
+          "seed": 0
+        },
+        "missing": {
+          "wood": 3
+        },
+        "unlocks": []
+      }
+    },
+    {
+      "name": "growth_build_missing",
+      "method": "POST",
+      "path": "/v1/growth/build",
+      "query": {},
+      "body": {
+        "building_code": "__nope__"
+      },
+      "status": 404,
+      "response": {
+        "error": {
+          "code": "BUILDING_NOT_FOUND",
+          "message": "建筑 __nope__ 不存在"
+        }
+      }
+    },
+    {
+      "name": "debug_learning_state",
+      "method": "GET",
+      "path": "/v1/debug/learning-state",
+      "query": {},
+      "body": null,
+      "status": 200,
+      "response": {
+        "child_id": 1,
+        "child_name": "小明",
+        "algorithm_version": 0,
+        "attempts_seen": 2,
+        "assessment_attempts": 0,
+        "competencies": {
+          "place_value": {
+            "level": "encountering",
+            "level_label": "🌱 接触",
+            "scaffold_level": "blocks",
+            "mastery": 0.0,
+            "accuracy": 0.0,
+            "fluency": null,
+            "independence": 1.0,
+            "transfer": null,
+            "confidence": 0.4,
+            "sample_count": 2,
+            "assessment_samples": 0,
+            "signal_sample_counts": {
+              "mastery": 2,
+              "accuracy": 2,
+              "independence": 2,
+              "confidence": 2
+            },
+            "probe_status": "unknown",
+            "algorithm_version": 0
+          }
+        },
+        "patterns": {
+          "place_value::represent_place_value": {
+            "level": "encountering",
+            "level_label": "🌱 接触",
+            "scaffold_level": "blocks",
+            "mastery": 0.0,
+            "accuracy": 0.0,
+            "fluency": null,
+            "independence": 1.0,
+            "transfer": null,
+            "confidence": 0.4,
+            "sample_count": 2,
+            "assessment_samples": 0,
+            "signal_sample_counts": {
+              "mastery": 2,
+              "accuracy": 2,
+              "independence": 2,
+              "confidence": 2
+            },
+            "probe_status": "unknown",
+            "algorithm_version": 0,
+            "competency": "place_value",
+            "pattern": "represent_place_value"
+          }
+        },
+        "misconceptions": [],
+        "recent_attempts": [
+          {
+            "attempt_id": "1",
+            "seq": 1,
+            "item_code": "pv_o_12",
+            "competency": "place_value",
+            "pattern": "represent_place_value",
+            "correct": false,
+            "hints_used": 0,
+            "thinking_time_ms": 1500,
+            "scaffold_level": "blocks",
+            "created_at": "<ISO>"
+          },
+          {
+            "attempt_id": "2",
+            "seq": 2,
+            "item_code": "pv_o_12",
+            "competency": "place_value",
+            "pattern": "represent_place_value",
+            "correct": false,
+            "hints_used": 0,
+            "thinking_time_ms": 1500,
+            "scaffold_level": "blocks",
+            "created_at": "<ISO>"
+          }
+        ],
+        "first_scaffold": {
+          "place_value": "blocks"
+        },
+        "last_touched_seq": {
+          "place_value": 2
+        }
+      }
+    },
+    {
+      "name": "unknown_path",
+      "method": "GET",
+      "path": "/definitely/not/here",
+      "query": {},
+      "body": null,
+      "status": 404,
+      "response": {
+        "error": {
+          "code": "NOT_FOUND",
+          "message": "Not Found"
+        }
+      }
+    },
+    {
+      "name": "method_not_allowed",
+      "method": "DELETE",
+      "path": "/v1/world",
+      "query": {},
+      "body": null,
+      "status": 405,
+      "response": {
+        "error": {
+          "code": "METHOD_NOT_ALLOWED",
+          "message": "Method Not Allowed"
+        }
+      }
+    }
+  ]
+}
