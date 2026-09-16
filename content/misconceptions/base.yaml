@@ -1,0 +1,53 @@
+# 错误认知（Misconception）
+#
+# 比记录"答错"有价值得多的是记录"错在哪里"。
+# remediation_competency 指明回退目标。
+
+misconceptions:
+  - code: counting_dependency
+    name: 依赖数数
+    description: 必须逐个点数才能得出结果，没有形成结构化的数量感
+    severity: 3
+    remediation_competency: make_ten
+
+  - code: make_ten_not_used
+    name: 想不到凑十
+    description: 会做但走的是逐个累加，没有使用凑十这条更快的路径
+    severity: 2
+    remediation_competency: make_ten
+
+  - code: place_value_confusion
+    name: 位值混淆
+    description: 把人/十混淆，例如 23+14 答成 47
+    severity: 3
+    remediation_competency: place_value
+
+  - code: carry_missed
+    name: 漏掉进位
+    description: 个位相加满十，但没有把 10 个一换成 1 个十
+    severity: 3
+    remediation_competency: carry_add
+
+  - code: borrow_missed
+    name: 漏掉退位
+    description: 个位不够减，但没有借 1 个十
+    severity: 3
+    remediation_competency: borrow_sub
+
+  - code: operation_confusion
+    name: 运算混淆
+    description: 该加的时候用了减（或反过来）
+    severity: 2
+    remediation_competency: null
+
+  - code: sign_confusion
+    name: 符号混淆
+    description: 看错 + / - 号
+    severity: 1
+    remediation_competency: null
+
+  - code: question_structure_missed
+    name: 没读懂问题结构
+    description: 算对了其中一步，但没有回答真正被问的问题
+    severity: 2
+    remediation_competency: null

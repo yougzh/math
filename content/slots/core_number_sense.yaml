@@ -1,0 +1,304 @@
+# 题目槽位（Challenge Slot）
+#
+# ⚠️ P0 说明：这里只有"独立训练槽"，没有任何故事内容。
+#    故事（story / story_beat）属于 P2，此处刻意不涉及。
+#
+# 独立训练槽证明了一件事：**槽位机制不属于故事**。
+# 故事只是槽位的一种使用场景；核心训练段、思维挑战段用的是同一套机制。
+#
+# pattern 留空表示"由规划器按孩子状态决定用哪个问题结构"（例如最近做过
+# decompose 就换成 total），这正是 ADR-0001 说的"策略可在槽位上表达而不改故事"。
+
+slots:
+  - code: core_sd_add_10_warmup
+    competency: sd_add_10
+    pattern: direct_compute
+    difficulty_min: 1
+    difficulty_max: 1
+    scaffold_level: direct
+    purpose: warmup
+    estimated_seconds: 6
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: core_make_ten_practice
+    competency: make_ten
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 4
+    scaffold_level: auto          # 由熟练度决定：blocks → decompose → direct
+    purpose: practice
+    estimated_seconds: 20
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: false
+
+  - code: core_make_ten_transfer
+    competency: make_ten
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: challenge
+    estimated_seconds: 18
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: true   # 迁移测试必须换一个没做过的认知结构
+
+  # ── P1 补齐：每个能力的独立训练槽 ────────────────────────────
+  #
+  # 之前只有 sd_add_10 / make_ten 有独立训练槽，其余 8 个能力在 core / warmup /
+  # thinking 段落**无题可出**（只有故事段能出题），迁移测试也因为找不到 challenge
+  # 槽而大面积落空（Planner 的段落→purpose 映射见 planner.py 的 _SEGMENT_PURPOSES）。
+  #
+  #   practice  → core / warmup 段（scaffold_level: auto 让熟练度决定脚手架）
+  #   challenge → thinking 段（prefer_untried_pattern 让迁移测试换一个问题结构）
+  #   warmup    → 热身段（召回已会但尚未自动化的能力）
+  #
+  # 难度区间按 content/items 的实际分布定，区间内必须有题：validate 会把
+  # "候选池为空"报成硬错误，lint 会对"候选池 < 3 道"报警。
+
+  - code: core_sd_add_10_practice
+    competency: sd_add_10
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: practice
+    estimated_seconds: 8
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: false
+    review_policy: {}
+
+  - code: core_sd_add_10_transfer
+    competency: sd_add_10
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: challenge
+    estimated_seconds: 10
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: true
+    review_policy: {}
+
+  - code: core_sd_sub_10_warmup
+    competency: sd_sub_10
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 1
+    scaffold_level: auto
+    purpose: warmup
+    estimated_seconds: 8
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: core_sd_sub_10_practice
+    competency: sd_sub_10
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: practice
+    estimated_seconds: 8
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: false
+    review_policy: {}
+
+  - code: core_sd_sub_10_transfer
+    competency: sd_sub_10
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: challenge
+    estimated_seconds: 10
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: true
+    review_policy: {}
+
+  - code: core_sd_add_20_practice
+    competency: sd_add_20
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: practice
+    estimated_seconds: 18
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: false
+    review_policy: {}
+
+  - code: core_sd_add_20_transfer
+    competency: sd_add_20
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: challenge
+    estimated_seconds: 18
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: true
+    review_policy: {}
+
+  - code: core_sd_sub_20_practice
+    competency: sd_sub_20
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: practice
+    estimated_seconds: 20
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: false
+    review_policy: {}
+
+  - code: core_sd_sub_20_transfer
+    competency: sd_sub_20
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: challenge
+    estimated_seconds: 20
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: true
+    review_policy: {}
+
+  - code: core_place_value_practice
+    competency: place_value
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: practice
+    estimated_seconds: 20
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: false
+    review_policy: {}
+
+  - code: core_place_value_transfer
+    competency: place_value
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: challenge
+    estimated_seconds: 20
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: true
+    review_policy: {}
+
+  - code: core_td_add_nocarry_practice
+    competency: td_add_nocarry
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: practice
+    estimated_seconds: 18
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: false
+    review_policy: {}
+
+  - code: core_td_add_nocarry_transfer
+    competency: td_add_nocarry
+    pattern: null
+    difficulty_min: 3
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: challenge
+    estimated_seconds: 18
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: true
+    review_policy: {}
+
+  - code: core_td_sub_nocarry_practice
+    competency: td_sub_nocarry
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: practice
+    estimated_seconds: 18
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: false
+    review_policy: {}
+
+  - code: core_td_sub_nocarry_transfer
+    competency: td_sub_nocarry
+    pattern: null
+    difficulty_min: 3
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: challenge
+    estimated_seconds: 18
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: true
+    review_policy: {}
+
+  - code: core_carry_add_practice
+    competency: carry_add
+    pattern: null
+    difficulty_min: 3
+    difficulty_max: 5
+    scaffold_level: auto
+    purpose: practice
+    estimated_seconds: 22
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: false
+    review_policy: {}
+
+  - code: core_carry_add_transfer
+    competency: carry_add
+    pattern: null
+    difficulty_min: 4
+    difficulty_max: 5
+    scaffold_level: auto
+    purpose: challenge
+    estimated_seconds: 22
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: true
+    review_policy: {}
+
+  - code: core_borrow_sub_practice
+    competency: borrow_sub
+    pattern: null
+    difficulty_min: 3
+    difficulty_max: 5
+    scaffold_level: auto
+    purpose: practice
+    estimated_seconds: 22
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: false
+    review_policy: {}
+
+  - code: core_borrow_sub_transfer
+    competency: borrow_sub
+    pattern: null
+    difficulty_min: 4
+    difficulty_max: 5
+    scaffold_level: auto
+    purpose: challenge
+    estimated_seconds: 22
+    selection_policy:
+      avoid_recent: 3
+      prefer_untried_pattern: true
+    review_policy: {}

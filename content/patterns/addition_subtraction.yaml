@@ -1,0 +1,79 @@
+# 阶段 1：问题结构（Problem Pattern）
+#
+# Pattern 是"认知结构"，不是"题型换皮"。
+# 同一个数学能力，在不同问题结构、不同故事、不同场景中反复出现，才是真正的迁移训练。
+#
+# primary_competency  : 该 pattern 的主能力
+# applicable_competencies: 允许被用于哪些能力（含 primary）
+# cognitive_type      : 只允许 compute / represent / strategy / apply / reverse
+
+patterns:
+  - code: direct_compute
+    name: 直接计算
+    cognitive_type: compute
+    primary_competency: sd_add_10
+    applicable_competencies: [sd_add_10, sd_sub_10, sd_add_20, sd_sub_20, make_ten, td_add_nocarry, td_sub_nocarry, carry_add, borrow_sub]
+    description: 直接给出算式求结果，不提供结构化支持
+
+  - code: number_friends
+    name: 数字朋友（补数）
+    cognitive_type: strategy
+    primary_competency: make_ten
+    applicable_competencies: [make_ten, sd_add_20]
+    description: 找出"还差多少到 10"，为凑十做准备
+
+  - code: decompose
+    name: 拆分
+    cognitive_type: strategy
+    primary_competency: make_ten
+    applicable_competencies: [make_ten, sd_add_20, td_add_nocarry, td_sub_nocarry, carry_add]
+    description: 把一个数拆成好算的两部分，再分别计算
+
+  - code: represent_place_value
+    name: 位值表征
+    cognitive_type: represent
+    primary_competency: place_value
+    applicable_competencies: [place_value, td_add_nocarry, td_sub_nocarry]
+    description: 用十与一的方式表示一个数，而不是"一个整体"
+
+  - code: carry_exchange
+    name: 进位交换
+    cognitive_type: represent
+    primary_competency: carry_add
+    applicable_competencies: [carry_add, borrow_sub]
+    description: 10 个一换 1 个十（或反过来）
+
+  - code: combine
+    name: 合并
+    cognitive_type: apply
+    primary_competency: td_add_nocarry
+    applicable_competencies: [sd_add_10, sd_add_20, td_add_nocarry, carry_add, place_value]
+    description: 两部分合起来一共有多少（位值语境下：几个十和几个一合成一个数）
+
+  - code: increase
+    name: 增加
+    cognitive_type: apply
+    primary_competency: carry_add
+    applicable_competencies: [sd_add_20, make_ten, td_add_nocarry, carry_add]
+    description: 在原有基础上又多了多少
+
+  - code: total
+    name: 总量
+    cognitive_type: apply
+    primary_competency: sd_add_20
+    applicable_competencies: [sd_add_20, make_ten, td_add_nocarry, carry_add]
+    description: 求总量，需要先判断该不该相加
+
+  - code: missing_part
+    name: 缺失部分
+    cognitive_type: reverse
+    primary_competency: make_ten
+    applicable_competencies: [sd_sub_10, sd_sub_20, make_ten, carry_add, borrow_sub]
+    description: 已知一部分和目标，求还差多少
+
+  - code: reverse
+    name: 逆向
+    cognitive_type: reverse
+    primary_competency: carry_add
+    applicable_competencies: [make_ten, td_add_nocarry, carry_add]
+    description: 已知结果反推起点

@@ -1,0 +1,91 @@
+# AI 教练的护栏配置
+#
+# 原则：教练说的每一句话都要过护栏。护栏拦下就退回规则文案，
+# 绝不把没通过校验的话给孩子看。
+#
+# 这里只放**文案与阈值**；教练说话的逻辑在 backend/coach/ 里。
+
+version: 0
+
+limits:
+  # 8 岁孩子的阅读负荷：一句话说完，最多两句
+  max_chars: 42
+  max_sentences: 2
+  max_exclamation_marks: 1
+
+# 语气禁区：出现任何一个就整句作废
+tone_forbidden_phrases:
+  - "错了"
+  - "不对"
+  - "又错了"
+  - "怎么又"
+  - "太慢"
+  - "笨"
+  - "这么简单"
+  - "你怎么"
+  - "不好"
+  - "不行"
+  - "再想想吧"
+  - "算了"
+
+# 表扬/鼓励/修复三档的开场词，随机取一个（避免重复听腻）
+tone_openers:
+  praise:
+    - "对啦"
+    - "漂亮"
+    - "就是这个"
+    - "完全正确"
+  praise_nudge:
+    - "答对了"
+    - "做出来了"
+    - "过关了"
+    - "算对了"
+  encourage:
+    - "差一点"
+    - "快到了"
+    - "思路是对的"
+    - "再试一下"
+  repair:
+    - "这里有个小陷阱"
+    - "我们换个办法"
+    - "往回退一步"
+
+# 反馈文案模板。{answer_step} 之类的占位符由 rules.py 填。
+feedback_templates:
+  correct_without_hint:
+    tone: praise
+    texts:
+      - "{opener}！自己算出来的。"
+      - "{opener}，这题你没要提示。"
+  correct_with_hint:
+    tone: praise_nudge
+    texts:
+      - "{opener}，用了提示也算过关，下一题试试不要提示。"
+      - "{opener}。提示帮了忙，记住这个办法。"
+  incorrect:
+    tone: repair
+    texts:
+      - "{opener}。我们回到第一步看看。"
+      - "{opener}，先把题目读一遍再算。"
+  incorrect_with_misconception:
+    tone: repair
+    texts:
+      - "{opener}，{misconception_hint}"
+  slow_but_correct:
+    tone: praise
+    texts:
+      - "{opener}！算得稳，再熟练一点就更快了。"
+
+# 每个能力对应的"思维提示"，用在修复型反馈里。
+# 只描述**该能力范围内**的动作，不能提前把下一位的技巧说出来。
+concept_prompts:
+  make_ten: "先看哪个数离 10 最近，把它补满"
+  sd_add_10: "把两个数列在一起，从大数往后数"
+  sd_sub_10: "从大数往前数"
+  sd_add_20: "先凑成 10，再加上剩下的"
+  sd_sub_20: "先减到 10，再减剩下的"
+  place_value: "左边的数字管十，右边的数字管一"
+  td_add_nocarry: "个位和个位相加，十位和十位相加"
+  td_sub_nocarry: "个位和个位相减，十位和十位相减"
+  carry_add: "个位满十了，要往十位送一个"
+  borrow_sub: "个位不够减，找十位借一个"

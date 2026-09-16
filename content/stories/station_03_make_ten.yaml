@@ -1,0 +1,79 @@
+# 数字车站 · 第 3 站：凑十特快
+#
+# 目标能力：make_ten（凑十）
+# 故事只回答"为什么做"：筐子快满了、要装车了，动手把橘子摆一摆。
+# 数学策略（凑十）由题目与教练承担，故事里不出现任何策略名（ADR-0001）。
+# beat 的 code 只写局部名，loader 会自动拼成 "{story_code}__{local}"。
+
+story:
+  code: station_03_make_ten
+  title: 数字车站 · 第 3 站：凑十特快
+  universe: number_station
+  summary: 装橘子的忙早晨：把小筐补满、把两筐合起来，看还剩几个、一共几个。
+  order_index: 3
+  duration_min: 6
+  target_competencies: [make_ten]
+
+beats:
+  - code: b1
+    type: narration
+    character: 行李员阿吉
+    text: 今天要送一批橘子。行李员阿吉推着小车，筐子里的橘子滚来滚去。
+  - code: b2
+    type: challenge
+    text: 阿吉想把橘子装进大筐，可是筐子还差一点点。再放进几个，筐子就装满了呢？
+  - code: b3
+    type: narration
+    character: 小猫滴滴
+    text: 滴滴追着滚出来的橘子跑，尾巴扫得橘子咕噜噜转。阿吉笑着喊它回来。
+  - code: b4
+    type: challenge
+    text: 筐里的橘子要倒在一起了。先数一数筐里的，再数一数外面的，一共有多少个？
+  - code: b5
+    type: narration
+    character: 小熊站长
+    text: 火车“当当”地进站。小熊站长帮阿吉把筐子一件一件搬上车。
+  - code: b6
+    type: challenge
+    text: 最后一筐也要装车了。装完这一筐，车上总共有多少个橘子？
+  - code: b7
+    type: reward
+    character: 行李员阿吉
+    text: 橘子整整齐齐地码在车厢里，一个都没掉。阿吉擦擦汗，笑得很开心。
+
+slots:
+  - code: st03_b2_make_ten
+    story_beat_id: station_03_make_ten__b2
+    competency: make_ten
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 80
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st03_b4_make_ten
+    story_beat_id: station_03_make_ten__b4
+    competency: make_ten
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 90
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st03_b6_make_ten
+    story_beat_id: station_03_make_ten__b6
+    competency: make_ten
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 100
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}

@@ -1,0 +1,14 @@
+[project]
+name = "math-world"
+version = "0.1.0"
+description = "数学世界 —— 8~9 岁儿童数学自适应学习系统"
+requires-python = ">=3.8"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q"
+
+[tool.setuptools]
+packages = ["backend"]

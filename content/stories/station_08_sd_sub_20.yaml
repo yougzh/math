@@ -1,0 +1,78 @@
+# 数字车站 · 第 8 站：空出来的座位
+#
+# 目标能力：sd_sub_20（20 以内减法）
+# 故事只回答"为什么做"：到站下车、行李被拎走，座位和架子都空了一些。
+# beat 的 code 只写局部名，loader 会自动拼成 "{story_code}__{local}"。
+
+story:
+  code: station_08_sd_sub_20
+  title: 数字车站 · 第 8 站：空出来的座位
+  universe: number_station
+  summary: 一车人坐得满满的，到站下车之后，把空出来的座位和剩下的东西数一数。
+  order_index: 8
+  duration_min: 6
+  target_competencies: [sd_sub_20]
+
+beats:
+  - code: b1
+    type: narration
+    character: 售票员小鹿
+    text: 这一节车厢刚刚坐满，看起来挤挤的，也很热闹。
+  - code: b2
+    type: challenge
+    text: 到了下一站，有几位乘客下车了。车上原来坐满了人，现在还剩多少位？
+  - code: b3
+    type: narration
+    character: 小熊站长
+    text: 小熊站长扶着乘客下车，还帮一位老奶奶把小包递到手上。
+  - code: b4
+    type: challenge
+    text: 行李架上的行李被拎走了一些。架子上还剩着多少件行李？
+  - code: b5
+    type: narration
+    character: 行李员阿吉
+    text: 阿吉顺手把空座位拍了拍，让座位看起来整整齐齐。
+  - code: b6
+    type: challenge
+    text: 票箱里的票也用掉了一些。数一数，票箱里还剩多少张票？
+  - code: b7
+    type: reward
+    character: 小猫滴滴
+    text: 空出来的座位一个挨一个晒着太阳。火车轻轻晃了晃，又出发了。
+
+slots:
+  - code: st08_b2_sd_sub_20
+    story_beat_id: station_08_sd_sub_20__b2
+    competency: sd_sub_20
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 80
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st08_b4_sd_sub_20
+    story_beat_id: station_08_sd_sub_20__b4
+    competency: sd_sub_20
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 90
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st08_b6_sd_sub_20
+    story_beat_id: station_08_sd_sub_20__b6
+    competency: sd_sub_20
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 100
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}

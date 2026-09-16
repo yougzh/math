@@ -1,0 +1,79 @@
+# 数字车站 · 第 1 站：好朋友
+#
+# 目标能力：sd_add_10（10 以内加法）
+# 故事只回答"为什么做"：站台上的人和东西要合起来数一数。
+# 具体做哪一道、什么难度、什么脚手架，全由 Planner 在运行时决定（ADR-0001）。
+# beat 的 code 只写局部名，loader 会自动拼成 "{story_code}__{local}"。
+
+story:
+  code: station_01_sd_add_10
+  title: 数字车站 · 第 1 站：好朋友
+  universe: number_station
+  summary: 小熊站长第一天上站台，把遇见的人和东西合起来数一数。
+  order_index: 1
+  duration_min: 6
+  target_competencies: [sd_add_10]
+
+beats:
+  - code: b1
+    type: narration
+    character: 小熊站长
+    text: 天亮了，数字车站的灯一盏一盏亮起来。小熊站长戴上帽子，站在站台上等头一班车。
+  - code: b2
+    type: challenge
+    text: 站台的长椅左边坐着一群小乘客，右边也坐着一群。两边合起来，一共坐着几位呢？
+  - code: b3
+    type: narration
+    character: 小猫滴滴
+    text: 小猫滴滴跑过来，蹲在站长脚边，尾巴摇得像一面小旗子。
+  - code: b4
+    type: challenge
+    text: 滴滴的篮子里装着皮球，左边一堆，右边一堆。两堆放在一起，一共有多少个球？
+  - code: b5
+    type: narration
+    character: 行李员阿吉
+    text: 行李员阿吉推着小车过来了，车上放着两只木箱，箱子晃呀晃。
+  - code: b6
+    type: challenge
+    text: 阿吉把箱里的东西摆在台子上，左边一堆橘子，右边一堆面包。合起来一共有多少？
+  - code: b7
+    type: reward
+    character: 小熊站长
+    text: 小熊站长笑了：“车站的早晨真热闹。”他把每个人的名字都记在小本子上。
+
+slots:
+  - code: st01_b2_sd_add_10
+    story_beat_id: station_01_sd_add_10__b2
+    competency: sd_add_10
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 80
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st01_b4_sd_add_10
+    story_beat_id: station_01_sd_add_10__b4
+    competency: sd_add_10
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 90
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st01_b6_sd_add_10
+    story_beat_id: station_01_sd_add_10__b6
+    competency: sd_add_10
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 100
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}

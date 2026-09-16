@@ -1,0 +1,222 @@
+# 数学世界 · 算法配置 v0
+#
+# 约定（与 ADR-0002 配套）：
+#   1. 本文件是熟练度算法唯一可调参处，代码里禁止出现阈值字面量
+#   2. 任何改动都必须能用 replay 重跑历史数据验证，且必须 bump version
+#   3. 状态记录必须 pin 住自己是用哪个 version 算出来的
+
+version: 0
+
+# ── 信号平滑 ───────────────────────────────────────────────
+smoothing:
+  ewma_alpha: 0.25          # 常规 attempt 的更新系数
+  min_samples_for_level: 6  # 样本数低于此值时等级固定为 encountering
+
+# ── 冷启动 Probe（D5） ────────────────────────────────────
+assessment:
+  probe_items: 4            # 首次进入某能力时的探测题量
+  weight: 0.5               # probe attempt 的 EWMA 权重折扣
+  blocks_upgrade: true      # probe attempt 不参与升级判定
+
+# ── 等级派生阈值（ADR-0002：等级是派生值） ──────────────────
+# 规则：信号从未采样过 → 该条件不参与判定（不因为"没测过"而卡住等级）
+level_thresholds:
+  encountering: {}
+  understanding:
+    mastery: 0.35
+    accuracy: 0.60
+  can_do:
+    mastery: 0.60
+    accuracy: 0.80
+  proficient:
+    mastery: 0.75
+    accuracy: 0.88
+    independence: 0.80
+    transfer: 0.70
+  automatic:
+    mastery: 0.85
+    accuracy: 0.93
+    independence: 0.88
+    transfer: 0.85
+    fluency: 0.80
+
+# ── 各信号的单次采样规则 ──────────────────────────────────
+mastery_sampling:
+  correct_without_hint: 1.00   # 独立做对才算真正理解
+  correct_with_hint: 0.70      # 靠提示做对，理解程度打折
+  incorrect: 0.00
+
+independence_sampling:
+  hint_penalty: 0.35           # 每个提示扣分
+  min_sample: 0.30             # 下限：用再多提示也不至于归零（孩子仍在尝试）
+
+fluency_sampling:
+  # 使用 thinking_time（ADR-0003），不是 response_time
+  # 比值为 thinking_time / threshold(pattern, interaction_type)
+  ratio_scores:
+    - {max_ratio: 0.75, score: 1.00}
+    - {max_ratio: 1.00, score: 0.90}
+    - {max_ratio: 1.50, score: 0.70}
+    - {max_ratio: 2.50, score: 0.50}
+    - {max_ratio: 999.0, score: 0.30}
+
+confidence_sampling:
+  correct: 1.0
+  incorrect: 0.4               # 答错但仍然在尝试，本身就是正向信号
+  alpha: 0.05                  # 长期趋势，慢速更新
+
+# ── 升级判定（严格门，与等级派生是两件事） ──────────────────
+upgrade_requires:
+  accuracy: 0.90
+  mastery: 0.75
+  independence: 0.85
+  transfer: 0.80
+  fluency: 0.60
+  min_samples: 8
+  min_practice_samples: 6     # 升级只认正式练习样本，probe 不算（D5）
+  require_new_pattern_success: true
+  require_prerequisites: true
+  new_pattern_success:
+    min_patterns: 2           # 至少两个不同 pattern 成功，才算"迁移过"
+    min_accuracy: 0.50
+
+# ── 回退触发 ──────────────────────────────────────────────
+fallback_triggers:
+  consecutive_wrong: 3
+  fluency_drop_ratio: 0.60      # 相对历史中位数跌破此比例
+  hint_spike_delta: 2           # 连续两次提示数跳增
+  misconception_prerequisite_trigger: true
+
+# ── 脚手架递退（blocks → decompose → direct） ──────────────
+scaffold_fading:
+  blocks_below_mastery: 0.50
+  decompose_below_mastery: 0.75
+
+# ── 选题（Selector） ──────────────────────────────────────
+# 职责边界（ADR-0001）：slot 说"练什么"（pattern / 难度区间 / 策略），
+# 本节只回答"具体做哪一道"，不改 slot 的语义。
+selection:
+  # 槽位没有显式写 selection_policy.avoid_recent 时的缺省避重窗口。
+  # 槽位显式写了就以槽位为准（内容作者的表达优先，含显式写 0 = 关闭避重）。
+  default_avoid_recent: 3
+
+  # 避重窗口的下限。窗口只数"最近 N 次作答"，而一天的计划是整批生成的，
+  # 当天最后几次作答会把窗口占满 —— 小于一天的窗口挡不住"昨天做过、
+  # 今天又排第一"的题（模拟体检 Q6 的现场）。取值口径：一天约 6~7 次作答，
+  # 因此下限取 8 ≈ 覆盖一整天。显式写 0 = 关闭避重，不受下限约束。
+  min_avoid_recent: 8
+
+  # 目标难度：把"孩子现在有多熟"翻译成"该给多难"。
+  #   position = (mastery - mastery_floor) / (mastery_ceiling - mastery_floor)  → 夹到 [0, 1]
+  #   target   = difficulty_min + position × (difficulty_max - difficulty_min)
+  # mastery 为 None（这个能力还没采到任何证据）→ 用 unknown_position。
+  #
+  # 两个端点刻意对齐等级阈值：mastery_floor 取 level_thresholds.understanding.mastery
+  # （"刚看懂"），mastery_ceiling 取 1.00（"完全熟练"）。
+  # 也就是说：从刚理解到完全熟练这段成长，正好走完 slot 声明的整个难度区间。
+  #
+  # 为什么 ceiling 不用 automatic.mastery(0.85)：实测把 ceiling 压到 0.85
+  # 会让「同一脚手架内跨难度」的池子（如 make_ten/decompose = {2, 3}）在
+  # 熟练度 0.65 就把难度推到 3，制造出 1→3 的难度断层（Q5 跳变 19→30）。
+  # 面向数学基础偏弱的孩子，宁可停在低一档：难度推进主要交给脚手架递退，
+  # 这里只兜住"熟练度已经很高、池子里却还有更简单的题"的情况。
+  #
+  # position 是连续值，这里**不分档**：由 Selector 取"离目标最近"的那道题，
+  # 难度随熟练度逐级上升（不会今天 1 明天 5），也永远不会越过 slot 的上限。
+  difficulty_target:
+    mastery_floor: 0.50
+    mastery_ceiling: 1.00
+    unknown_position: 0.0
+
+  # 难度阶梯（Selector 与 difficulty_target 配合）：
+  #   同一能力内推进难度时，相邻两次作答的难度上升不超过 max_difficulty_step_up 档
+  #   —— 这是"不跳级"的硬约束（模拟体检 Q5 的判据是上升 ≥ 2）；
+  #   同时难度不回头低于"最近做过的难度"：单次失误不回撤难度
+  #   （回撤交给 fallback_triggers 判定），否则低难度题占多数的池子
+  #   会把难度反复拽回去。跨能力切换不套用上一次难度：难度是能力内标尺，
+  #   新能力的起点由该能力自己的熟练度目标决定。
+  max_difficulty_step_up: 1
+
+# ── 时间语义（ADR-0003，冻结） ─────────────────────────────
+time_semantics:
+  thinking_normal_max_ms: 5000     # < 5s  正常思考
+  uncertain_max_ms: 30000          # 5~30s 可能是思考也可能是停顿
+                                   # > 30s 记为 idle 分段（疑似离开，不是判定无效）
+  idle_dominated_ratio: 0.50       # idle 占 response 超过此比例 → 标记 idle_dominated
+                                   # 注意：只标记、不剔除；thinking 仍是合法信号
+  # 禁止出现"超过 N 秒即视为无效"的一刀切剔除规则（ADR-0003）
+
+# ── fluency 阈值：按 (pattern, interaction_type) 区分，单位秒 ──
+fluency_thresholds:
+  direct_compute:        {number_pad: 6,  choice: 5,  blocks: 12}
+  number_friends:        {choice: 5,  decompose_drag: 12}
+  decompose:             {decompose_drag: 15, blocks: 12, choice: 10}
+  represent_place_value: {blocks: 20}
+  carry_exchange:        {carry_exchange: 18}
+  combine:               {number_pad: 15, choice: 12}
+  increase:              {number_pad: 15, choice: 12}
+  total:                 {number_pad: 20, choice: 15}
+  missing_part:          {number_pad: 20, choice: 15}
+  reverse:               {choice: 15}
+  default:               {number_pad: 20, choice: 15, blocks: 25, decompose_drag: 20}
+
+# ── 间隔复习（P0 只定义，P3 接线） ──────────────────────────
+review_intervals_days: [1, 3, 7, 14, 30]
+
+# ── 复习调度参数（P3 新增；上级 review_intervals_days 是间隔序列） ──
+review:
+  max_per_day: 3            # 每日复习上限：超出的按逾期天数顺延到次日，防止复习洪峰
+  min_mastery: 0.60         # 只有 mastery 达到此值的 pattern 才进复习队列
+                            # （与 level_thresholds.can_do.mastery 对齐：没学会的属于教学）
+
+# ── 历史窗口 ──────────────────────────────────────────────
+history:
+  recent_attempt_window: 20   # 状态里保留多少条近期作答（供回退判定与诊断使用）
+
+# ── 学习意图层 ────────────────────────────────────────────
+# Planner 的输入是"学习意图"，不是题目（学习决策链第 2 环）
+intent:
+  probe_transfer_mastery: 0.60    # 熟练度达到该值且有未尝试的 pattern → 发起迁移测试
+  # fluency 低于「升级门槛 × 该比例」→ 专项强化流畅度。
+  # 比例必须取 1.0：取 0.80 会造出 [0.48, 0.60) 这个死区 —— fluency=0.50 的
+  # 孩子拿不到流畅度专项，升级门槛却又要求 ≥0.60，"会，但是慢"的孩子就被
+  # 永久夹死（模拟实测：会但很慢型 30 天 fluency 停在 0.50，一次专项都没排上，
+  # 而这恰恰是本产品最想解决的那类孩子）。
+  # 升级门槛本身就是"流畅"的定义线，低于它就该训练，不需要再打折。
+  strengthen_fluency_ratio: 1.00
+  warmup_min_mastery: 0.60        # 热身选"已经会、但还没自动化"的能力
+  warmup_max_samples: 12          # 样本太少的能力不算热身素材（还没到"自动化"阶段）
+  warmup_item_count: 2
+  core_item_count: 3
+  thinking_item_count: 1
+
+# ── 通用错误规则：内容层 error_rules 未命中时的兜底诊断 ──────
+# 内容层应尽量显式声明规则，这里只兜最常见的结构性错误。
+generic_error_rules:
+  - code: place_value_confusion
+    match: {answer_off_by_multiple_of: 10}
+  - code: counting_dependency
+    match: {answer_off_by: 1}
+
+# ── 每日计划时间预算（时间硬约束，不是题量硬约束） ───────────
+daily_plan:
+  budget_minutes: 12
+  min_budget_minutes: 10
+  max_budget_minutes: 15
+  segments:
+    - {type: warmup,    ratio: 0.15}
+    - {type: core,      ratio: 0.30}
+    - {type: story,     ratio: 0.30}
+    - {type: thinking,  ratio: 0.18}
+    - {type: discovery, ratio: 0.07}
+
+# ── 家长报告（契约 §10） ──────────────────────────────────
+# 弱项判定的粗阈值，文案规则在 backend/service/report.py。
+# ADR-0002：算法阈值不允许以字面量形式散落在代码里。
+report:
+  weak_thresholds:
+    accuracy: 0.60                # 正确率低于此值 → 「正确率还不稳定」
+    fluency: 0.50                 # 流畅度低于此值（且正确率达标）→ 「会但慢」
+    independence: 0.60            # 独立完成度低于此值 → 「还需要提示」
+    transfer: 0.50                # 迁移低于此值 → 「换个问法就卡住」
+    fluency_accuracy_floor: 0.70  # 判定「会但慢」所要求的正确率下限

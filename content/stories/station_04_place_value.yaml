@@ -1,0 +1,79 @@
+# 数字车站 · 第 4 站：号码牌
+#
+# 目标能力：place_value（十位与个位）
+# 故事只回答"为什么做"：号码牌念不对，行李就会走丢。
+# 故事语义确实要求"用十与一表示一个数"，所以 pattern 写死 represent_place_value。
+# beat 的 code 只写局部名，loader 会自动拼成 "{story_code}__{local}"。
+
+story:
+  code: station_04_place_value
+  title: 数字车站 · 第 4 站：号码牌
+  universe: number_station
+  summary: 行李员阿吉给每件行李挂号码牌，把号码念对，行李才不会走丢。
+  order_index: 4
+  duration_min: 6
+  target_competencies: [place_value]
+
+beats:
+  - code: b1
+    type: narration
+    character: 行李员阿吉
+    text: 行李员阿吉给每件行李挂上号码牌。牌子上的数字要念对，行李才不会走丢。
+  - code: b2
+    type: challenge
+    text: 这件大行李的号码牌上有两个数字。它的号码里，藏着几个十、几个一呢？
+  - code: b3
+    type: narration
+    character: 小猫滴滴
+    text: 滴滴跳上行李车，用爪子把号码牌拨得咔咔响。
+  - code: b4
+    type: challenge
+    text: 小箱子的号码牌歪着头。它里面的数字，又藏着几个十、几个一？
+  - code: b5
+    type: narration
+    character: 售票员小鹿
+    text: 售票员小鹿走过来，把行李一件一件排成一行。
+  - code: b6
+    type: challenge
+    text: 小熊站长检查最后一件行李的号码牌。它的数字是几个十、几个一呢？
+  - code: b7
+    type: reward
+    character: 行李员阿吉
+    text: 行李排成一列，每一件都挂着自己的号码牌。一件都没有走丢。
+
+slots:
+  - code: st04_b2_place_value
+    story_beat_id: station_04_place_value__b2
+    competency: place_value
+    pattern: represent_place_value
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 80
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st04_b4_place_value
+    story_beat_id: station_04_place_value__b4
+    competency: place_value
+    pattern: represent_place_value
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 90
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st04_b6_place_value
+    story_beat_id: station_04_place_value__b6
+    competency: place_value
+    pattern: represent_place_value
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 100
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}

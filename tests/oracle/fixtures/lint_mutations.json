@@ -1,0 +1,431 @@
+{
+  "note": [
+    "内容校验/lint 的声明式变异 —— Python 与 TS **两侧读同一份**，各自施加到真实 bundle 上，",
+    "比较 {trace, problems, warnings}。",
+    "",
+    "为什么不用真实内容的现状：1373 道题在 validate_content 下一条都不报，在 lint_bundle 下只报",
+    "9 条规则里的 1 条。也就是说「拿真实内容跑一遍」对另外那些规则的约束力是零 —— TS 侧把整条",
+    "规则换成 return []，对拍照样全绿。变异的作用就是让每一条规则在**真实内容**上被触发一次。",
+    "",
+    "为什么 ops 是可解释的声明式指令而不是直接给最终的 bundle：",
+    "  两侧都必须从同一份 content/ 出发，用各自的 loader 加载，再施加同一组 ops。",
+    "  直接给最终 bundle 等于绕过了 loader，而 loader 本身就是被测对象之一。",
+    "",
+    "trace 是「这组 ops 到底改了什么」的产物（改了哪些实体、删了哪些 code），两侧必须完全一致 ——",
+    "它是防「变异解释器本身分叉」的。只比 problems/warnings 的话，一个恰好不影响输出的",
+    "解释器差异（比如删掉了另一组同输出的题）会悄悄溜过去。",
+    "",
+    "targets 字段纯粹是文档：说明这条变异是为了触发哪条规则。dump 脚本会断言 9 条规则",
+    "全部被覆盖（见 dump_lint 的自证检查）。"
+  ],
+  "ops_grammar": {
+    "set_item": "{op, code, field, value} —— item.code 的 field 赋值（field 为 problem 时整对象替换）",
+    "set_slot": "{op, code, field, value} —— slot.code 的 field 赋值",
+    "delete_item": "{op, code} —— 删掉一个 item",
+    "delete_items_where": "{op, competency?, scaffold_level?, pattern?} —— 按条件删 item，至少给一个条件",
+    "set_items_where": "{op, competency?, scaffold_level?, pattern?, field, value} —— 按条件改 item，至少给一个条件"
+  },
+  "mutations": [
+    {
+      "id": "baseline",
+      "note": "未变异：真实内容的现状（0 错误 / 10 警告）",
+      "targets": [],
+      "ops": []
+    },
+    {
+      "id": "control_slot_purpose",
+      "note": "负向对照：没有任何规则读 slot.purpose，输出必须与 baseline 逐字相同",
+      "targets": [],
+      "ops": [
+        {
+          "op": "set_slot",
+          "code": "core_sd_add_10_warmup",
+          "field": "purpose",
+          "value": "review"
+        }
+      ],
+      "expect_baseline": true
+    },
+    {
+      "id": "control_steps_completed",
+      "note": "负向对照：steps_style=conclude 且步骤里出现了答案 —— lint_all 不该开口",
+      "targets": [],
+      "ops": [
+        {
+          "op": "set_item",
+          "code": "s10a_1_1",
+          "field": "steps_style",
+          "value": "conclude"
+        },
+        {
+          "op": "set_item",
+          "code": "s10a_1_1",
+          "field": "steps",
+          "value": [
+            "1 + 1 = 2"
+          ]
+        }
+      ],
+      "expect_baseline": true
+    },
+    {
+      "id": "coverage_missing_blocks",
+      "note": "make_ten 的 blocks 层整层消失",
+      "targets": [
+        "_lint_coverage"
+      ],
+      "ops": [
+        {
+          "op": "delete_items_where",
+          "competency": "make_ten",
+          "scaffold_level": "blocks"
+        }
+      ]
+    },
+    {
+      "id": "time_reversed",
+      "note": "blocks 组里难度最低的题耗时改成 999s —— 耗时与难度反向",
+      "targets": [
+        "_lint_time_estimates"
+      ],
+      "ops": [
+        {
+          "op": "set_item",
+          "code": "s10b_2_1",
+          "field": "estimated_seconds",
+          "value": 999
+        }
+      ]
+    },
+    {
+      "id": "time_nonpositive",
+      "note": "number_pad 组里一道题的 estimated_seconds 变成 0",
+      "targets": [
+        "_lint_time_estimates"
+      ],
+      "ops": [
+        {
+          "op": "set_item",
+          "code": "s10a_1_1",
+          "field": "estimated_seconds",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "duplicate_diverging_answer",
+      "note": "s20d_5_6 与 mt_dir_5_6 同题面「5 + 6 = ?」（答案都是 11），把前者改成 12",
+      "targets": [
+        "_lint_duplicates"
+      ],
+      "ops": [
+        {
+          "op": "set_item",
+          "code": "s20d_5_6",
+          "field": "answer",
+          "value": 12
+        }
+      ]
+    },
+    {
+      "id": "hint_too_shallow",
+      "note": "难度 3 的题只剩一级提示",
+      "targets": [
+        "_lint_hint_depth"
+      ],
+      "ops": [
+        {
+          "op": "set_item",
+          "code": "s10b_2_7",
+          "field": "hint_chain",
+          "value": [
+            "只有一级"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "slot_pool_narrowed",
+      "note": "number_friends 的 8 道题删掉 6 道，再把一个 make_ten 槽绑到它、区间收成 1~1 → 候选池剩 2",
+      "targets": [
+        "_lint_slot_pools"
+      ],
+      "ops": [
+        {
+          "op": "delete_item",
+          "code": "nf_6"
+        },
+        {
+          "op": "delete_item",
+          "code": "nf_7"
+        },
+        {
+          "op": "delete_item",
+          "code": "nf_8"
+        },
+        {
+          "op": "delete_item",
+          "code": "nf_9"
+        },
+        {
+          "op": "delete_item",
+          "code": "mt_nf_6"
+        },
+        {
+          "op": "delete_item",
+          "code": "mt_nf_7"
+        },
+        {
+          "op": "set_slot",
+          "code": "core_make_ten_practice",
+          "field": "pattern_id",
+          "value": "number_friends"
+        },
+        {
+          "op": "set_slot",
+          "code": "core_make_ten_practice",
+          "field": "difficulty_max",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "story_too_short_half_even",
+      "note": "station_01 三个槽都改成 65s → 合计 195s = 3.25 分钟。⚠️ 3.25 是 half-even 的分歧点：Python 给「3.2」，JS 的 toFixed(1) 会给「3.3」",
+      "targets": [
+        "_lint_story_shape"
+      ],
+      "ops": [
+        {
+          "op": "set_slot",
+          "code": "st01_b2_sd_add_10",
+          "field": "estimated_seconds",
+          "value": 65
+        },
+        {
+          "op": "set_slot",
+          "code": "st01_b4_sd_add_10",
+          "field": "estimated_seconds",
+          "value": 65
+        },
+        {
+          "op": "set_slot",
+          "code": "st01_b6_sd_add_10",
+          "field": "estimated_seconds",
+          "value": 65
+        }
+      ]
+    },
+    {
+      "id": "story_too_long_half_even",
+      "note": "station_02 三个槽都改成 205s → 合计 615s = 10.25 分钟。同上：Python「10.2」/ toFixed「10.3」",
+      "targets": [
+        "_lint_story_shape"
+      ],
+      "ops": [
+        {
+          "op": "set_slot",
+          "code": "st02_b2_sd_sub_10",
+          "field": "estimated_seconds",
+          "value": 205
+        },
+        {
+          "op": "set_slot",
+          "code": "st02_b4_sd_sub_10",
+          "field": "estimated_seconds",
+          "value": 205
+        },
+        {
+          "op": "set_slot",
+          "code": "st02_b6_sd_sub_10",
+          "field": "estimated_seconds",
+          "value": 205
+        }
+      ]
+    },
+    {
+      "id": "steps_conclude_without_answer",
+      "note": "mt_blk_8_5 是 guide 且示范路径没走到答案 13，翻成 conclude 就会报",
+      "targets": [
+        "_lint_steps"
+      ],
+      "ops": [
+        {
+          "op": "set_item",
+          "code": "mt_blk_8_5",
+          "field": "steps_style",
+          "value": "conclude"
+        }
+      ]
+    },
+    {
+      "id": "prompt_without_numbers",
+      "note": "题面「一共有多少个？」里一个数字都没有，但参数是 5 / 6",
+      "targets": [
+        "_lint_prompt_self_contained"
+      ],
+      "ops": [
+        {
+          "op": "set_item",
+          "code": "mt_dec_5_6",
+          "field": "problem",
+          "value": {
+            "a": 5,
+            "b": 6,
+            "prompt": "一共有多少个？"
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt_missing",
+      "note": "problem 整个换成没有 prompt 的对象",
+      "targets": [
+        "_lint_prompt_self_contained"
+      ],
+      "ops": [
+        {
+          "op": "set_item",
+          "code": "nf_6",
+          "field": "problem",
+          "value": {
+            "a": 5,
+            "b": 7
+          }
+        }
+      ]
+    },
+    {
+      "id": "slot_ceiling_unreachable",
+      "note": "warmup 槽声明的上限难度 9 在内容里一道题都没有",
+      "targets": [
+        "_lint_slot_ceiling"
+      ],
+      "ops": [
+        {
+          "op": "set_slot",
+          "code": "core_sd_add_10_warmup",
+          "field": "difficulty_max",
+          "value": 9
+        }
+      ]
+    },
+    {
+      "id": "slot_pattern_absent",
+      "note": "把 sd_add_10 的槽绑到 number_friends（该 pattern 的题全在 make_ten）",
+      "targets": [
+        "_lint_slot_ceiling"
+      ],
+      "ops": [
+        {
+          "op": "set_slot",
+          "code": "core_sd_add_10_practice",
+          "field": "pattern_id",
+          "value": "number_friends"
+        }
+      ]
+    },
+    {
+      "id": "slot_scaffold_explicit_hit",
+      "note": "st09 槽显式声明 decompose 层 —— increase 的题全在那一层，脚手架那条不该报",
+      "targets": [
+        "_lint_slot_ceiling"
+      ],
+      "ops": [
+        {
+          "op": "set_slot",
+          "code": "st09_b2_carry_add",
+          "field": "scaffold_level",
+          "value": "decompose"
+        }
+      ]
+    },
+    {
+      "id": "slot_scaffold_explicit_gap",
+      "note": "st09 槽显式声明 direct 层 —— 那一层只有别的 pattern 的题",
+      "targets": [
+        "_lint_slot_ceiling"
+      ],
+      "ops": [
+        {
+          "op": "set_slot",
+          "code": "st09_b2_carry_add",
+          "field": "scaffold_level",
+          "value": "direct"
+        }
+      ]
+    },
+    {
+      "id": "slot_range_inverted",
+      "note": "槽的最小难度超过最大难度",
+      "targets": [],
+      "ops": [
+        {
+          "op": "set_slot",
+          "code": "core_sd_sub_10_practice",
+          "field": "difficulty_min",
+          "value": 5
+        }
+      ],
+      "expect_problems": true
+    },
+    {
+      "id": "slot_pool_empty",
+      "note": "warmup 槽区间倒置 → 候选池为空（validate 的错误，不是 lint）",
+      "targets": [],
+      "ops": [
+        {
+          "op": "set_slot",
+          "code": "core_sd_add_10_warmup",
+          "field": "difficulty_min",
+          "value": 4
+        }
+      ],
+      "expect_problems": true
+    },
+    {
+      "id": "item_pattern_missing",
+      "note": "题指向一个不存在的 pattern",
+      "targets": [],
+      "ops": [
+        {
+          "op": "set_item",
+          "code": "s10a_1_1",
+          "field": "pattern_id",
+          "value": "ghost_p"
+        }
+      ],
+      "expect_problems": true
+    },
+    {
+      "id": "item_pattern_not_applicable",
+      "note": "题挂在 borrow_sub 上，但它的 pattern（number_friends）只适用于 make_ten",
+      "targets": [],
+      "ops": [
+        {
+          "op": "set_item",
+          "code": "nf_6",
+          "field": "competency_id",
+          "value": "borrow_sub"
+        }
+      ],
+      "expect_problems": true
+    },
+    {
+      "id": "items_where_scaffold_shift",
+      "note": "把 carry_add 的 increase 题整批挪到 direct 层 → 该能力的脚手架分布变了",
+      "targets": [
+        "_lint_coverage"
+      ],
+      "ops": [
+        {
+          "op": "set_items_where",
+          "competency": "carry_add",
+          "pattern": "increase",
+          "field": "scaffold_level",
+          "value": "direct"
+        }
+      ]
+    }
+  ]
+}

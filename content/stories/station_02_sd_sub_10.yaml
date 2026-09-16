@@ -1,0 +1,78 @@
+# 数字车站 · 第 2 站：反着数
+#
+# 目标能力：sd_sub_10（10 以内减法）
+# 故事只回答"为什么做"：票、乘客、行李变少了，还剩多少要数一数。
+# beat 的 code 只写局部名，loader 会自动拼成 "{story_code}__{local}"。
+
+story:
+  code: station_02_sd_sub_10
+  title: 数字车站 · 第 2 站：反着数
+  universe: number_station
+  summary: 售出票、下车的人和搬走的行李，让小鹿一边卖票一边数还剩多少。
+  order_index: 2
+  duration_min: 6
+  target_competencies: [sd_sub_10]
+
+beats:
+  - code: b1
+    type: narration
+    character: 售票员小鹿
+    text: 售票员小鹿把票箱抱到窗口，箱子里的票叠得整整齐齐。头一班车要检票了。
+  - code: b2
+    type: challenge
+    text: 小鹿数了数票箱里的票，检票时用掉了一些。票箱里还剩下多少张票呢？
+  - code: b3
+    type: narration
+    character: 小熊站长
+    text: 站台上，小熊站长举起小旗子。火车“当当”地进站了。
+  - code: b4
+    type: challenge
+    text: 车上有一位乘客到站了，拎着包走下站台。车上还剩着多少位乘客？
+  - code: b5
+    type: narration
+    character: 小猫滴滴
+    text: 滴滴蹲在车门口，回头看看站台，像在数有没有人落下东西。
+  - code: b6
+    type: challenge
+    text: 行李架上原来放着好几件行李，乘客拎走了一些。架子上还留着多少件？
+  - code: b7
+    type: reward
+    character: 售票员小鹿
+    text: 车门关上了，小鹿把票箱抱回窗口。火车慢慢开走，站台安静下来。
+
+slots:
+  - code: st02_b2_sd_sub_10
+    story_beat_id: station_02_sd_sub_10__b2
+    competency: sd_sub_10
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 80
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st02_b4_sd_sub_10
+    story_beat_id: station_02_sd_sub_10__b4
+    competency: sd_sub_10
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 90
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st02_b6_sd_sub_10
+    story_beat_id: station_02_sd_sub_10__b6
+    competency: sd_sub_10
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 100
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}

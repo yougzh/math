@@ -1,0 +1,68 @@
+# 数学实验室
+#
+# 自由探索区：**不计入熟练度状态**。
+# 它的作用是让孩子在没有对错压力的环境里，把抽象符号和看得见的东西对上。
+# 所以这里的实验不是"题目"，没有 answer，不进 attempt，不进 proficiency。
+#
+# unlock 为空 = 一直可用；否则要求某个能力达到某个等级。
+# 前三个实验一直开放 —— 探索区不能有门槛，否则孩子根本进不来。
+
+version: 0
+
+experiments:
+  - code: blocks
+    name: 数字积木
+    emoji: "🧱"
+    description: 把一个数摆成几个十和几个一
+    component: blocks_lab
+    unlock: null
+
+  - code: decompose
+    name: 拆分数字
+    emoji: "✂️"
+    description: 23 可以拆成 20 和 3，也可以拆成别的
+    component: decompose_lab
+    unlock: null
+
+  - code: make_ten
+    name: 凑十
+    emoji: "🔟"
+    description: 把两个数里的一个补满到 10，看看会剩下什么
+    component: make_ten_lab
+    unlock: null
+
+  - code: place_value_train
+    name: 十位小火车
+    emoji: "🚃"
+    description: 十位车厢和个位车厢分开跑
+    component: place_value_train_lab
+    unlock:
+      competency: place_value
+      min_level: understanding
+
+  - code: carry_exchange
+    name: 进位交换
+    emoji: "🔁"
+    description: 10 个一换 1 个十，看看车厢怎么变
+    component: carry_exchange_lab
+    unlock:
+      competency: carry_add
+      min_level: understanding
+
+  - code: borrow_exchange
+    name: 退位交换
+    emoji: "🔓"
+    description: 拆开 1 个十，换成 10 个一
+    component: borrow_exchange_lab
+    unlock:
+      competency: borrow_sub
+      min_level: understanding
+
+  - code: shape_build
+    name: 图形搭建
+    emoji: "🔺"
+    description: 用小棒搭出各种图形（为几何做准备）
+    component: shape_build_lab
+    unlock:
+      competency: td_add_nocarry
+      min_level: understanding

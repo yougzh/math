@@ -1,0 +1,78 @@
+# 数字车站 · 第 7 站：装满一节
+#
+# 目标能力：sd_add_20（20 以内加法）
+# 故事只回答"为什么做"：今天只有一节车厢，先上来的、后上来的，一共多少人。
+# beat 的 code 只写局部名，loader 会自动拼成 "{story_code}__{local}"。
+
+story:
+  code: station_07_sd_add_20
+  title: 数字车站 · 第 7 站：装满一节
+  universe: number_station
+  summary: 一节车厢，两批乘客，把所有人合起来数一数，看看能不能装满。
+  order_index: 7
+  duration_min: 6
+  target_competencies: [sd_add_20]
+
+beats:
+  - code: b1
+    type: narration
+    character: 售票员小鹿
+    text: 今天只挂了一节车厢，座位一个挨着一个。乘客们排着队上车。
+  - code: b2
+    type: challenge
+    text: 先上车的坐了一批，后面又上来一批。这一节车厢里一共有多少位乘客？
+  - code: b3
+    type: narration
+    character: 小熊站长
+    text: 小熊站长站在车门口，扶着每一位上车的乘客。
+  - code: b4
+    type: challenge
+    text: 车厢这头坐着一批，那头也坐着一批。这一节里一共有多少位？
+  - code: b5
+    type: narration
+    character: 小猫滴滴
+    text: 滴滴在座位中间钻来钻去，最后跳上行李架趴下了。
+  - code: b6
+    type: challenge
+    text: 车厢里的座位快要坐满了。数一数，一共坐了多少位乘客？
+  - code: b7
+    type: reward
+    character: 售票员小鹿
+    text: 车厢坐得满满当当，笑声从窗户里飘出来。小鹿挥挥小旗子，火车出发了。
+
+slots:
+  - code: st07_b2_sd_add_20
+    story_beat_id: station_07_sd_add_20__b2
+    competency: sd_add_20
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 80
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st07_b4_sd_add_20
+    story_beat_id: station_07_sd_add_20__b4
+    competency: sd_add_20
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 90
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st07_b6_sd_add_20
+    story_beat_id: station_07_sd_add_20__b6
+    competency: sd_add_20
+    pattern: null
+    difficulty_min: 1
+    difficulty_max: 3
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 100
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}

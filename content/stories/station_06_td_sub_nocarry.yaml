@@ -1,0 +1,78 @@
+# 数字车站 · 第 6 站：下车的人
+#
+# 目标能力：td_sub_nocarry（两位数减法，不退位）
+# 故事只回答"为什么做"：到站有人下车、行李被搬走，剩下的要数清楚。
+# beat 的 code 只写局部名，loader 会自动拼成 "{story_code}__{local}"。
+
+story:
+  code: station_06_td_sub_nocarry
+  title: 数字车站 · 第 6 站：下车的人
+  universe: number_station
+  summary: 火车到站，乘客和行李都少了一些，把剩下的数清楚再出发。
+  order_index: 6
+  duration_min: 6
+  target_competencies: [td_sub_nocarry]
+
+beats:
+  - code: b1
+    type: narration
+    character: 小熊站长
+    text: 火车在月台边停下。有几位乘客到家了，拎着包准备下车。
+  - code: b2
+    type: challenge
+    text: 车上原来坐着一批乘客，这一站下去了几位。车上还剩着多少位？
+  - code: b3
+    type: narration
+    character: 售票员小鹿
+    text: 下车的乘客挥挥手，站台上的风把他们的衣角吹得鼓鼓的。
+  - code: b4
+    type: challenge
+    text: 行李架上原来是满满一排行李。乘客搬下去一些，还剩下多少件？
+  - code: b5
+    type: narration
+    character: 行李员阿吉
+    text: 阿吉把空出来的行李架擦了擦，抹布划过的地方亮亮的。
+  - code: b6
+    type: challenge
+    text: 票箱里放着厚厚一叠票，小鹿用掉了一叠。票箱里还剩多少张？
+  - code: b7
+    type: reward
+    character: 小猫滴滴
+    text: 火车又开动了。空出来的座位晒着太阳，暖暖的。滴滴趴上去打了个盹。
+
+slots:
+  - code: st06_b2_td_sub_nocarry
+    story_beat_id: station_06_td_sub_nocarry__b2
+    competency: td_sub_nocarry
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 80
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st06_b4_td_sub_nocarry
+    story_beat_id: station_06_td_sub_nocarry__b4
+    competency: td_sub_nocarry
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 90
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st06_b6_td_sub_nocarry
+    story_beat_id: station_06_td_sub_nocarry__b6
+    competency: td_sub_nocarry
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 100
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}

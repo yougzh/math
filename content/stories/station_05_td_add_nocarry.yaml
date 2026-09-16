@@ -1,0 +1,78 @@
+# 数字车站 · 第 5 站：两节车厢
+#
+# 目标能力：td_add_nocarry（两位数加法，不进位）
+# 故事只回答"为什么做"：前面一节加后面一节，合起来看一共多少。
+# beat 的 code 只写局部名，loader 会自动拼成 "{story_code}__{local}"。
+
+story:
+  code: station_05_td_add_nocarry
+  title: 数字车站 · 第 5 站：两节车厢
+  universe: number_station
+  summary: 今天挂了两节车厢，乘客和行李分头坐好、放好，再合起来数一数。
+  order_index: 5
+  duration_min: 6
+  target_competencies: [td_add_nocarry]
+
+beats:
+  - code: b1
+    type: narration
+    character: 售票员小鹿
+    text: 今天的火车挂了两节车厢，一节在前面，一节在后面，座位都擦得亮亮的。
+  - code: b2
+    type: challenge
+    text: 前面一节坐着一些乘客，后面一节也坐着一些。两节车厢合起来，一共坐了多少位？
+  - code: b3
+    type: narration
+    character: 小熊站长
+    text: 小熊站长吹响哨子，火车“当当”地进站，窗户里亮着一排小灯。
+  - code: b4
+    type: challenge
+    text: 先上车的乘客坐在前一节，后来的坐在后一节。今天一共来了多少位乘客？
+  - code: b5
+    type: narration
+    character: 行李员阿吉
+    text: 行李员阿吉把行李也码好了，大箱子一堆，小箱子一堆。
+  - code: b6
+    type: challenge
+    text: 大箱子和小箱子合在一起，阿吉今天一共搬了多少件行李？
+  - code: b7
+    type: reward
+    character: 小熊站长
+    text: 两节车厢都坐好了，行李也放好了。小熊站长吹哨子：“出发！”
+
+slots:
+  - code: st05_b2_td_add_nocarry
+    story_beat_id: station_05_td_add_nocarry__b2
+    competency: td_add_nocarry
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 80
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st05_b4_td_add_nocarry
+    story_beat_id: station_05_td_add_nocarry__b4
+    competency: td_add_nocarry
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 90
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st05_b6_td_add_nocarry
+    story_beat_id: station_05_td_add_nocarry__b6
+    competency: td_add_nocarry
+    pattern: null
+    difficulty_min: 2
+    difficulty_max: 4
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 100
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}

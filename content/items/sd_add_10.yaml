@@ -1,0 +1,92 @@
+# Item：10 以内加法（sd_add_10）
+#
+# 这批是"已经会、但还没完全自动化"的基础题，主要供 Planner 的热身段与前置复习使用。
+#
+# difficulty 与 generators.sd_add_10_difficulty 同一条规则：和 ≤ 5 为 1、6~8 为 2、
+# 9~10 为 3。难度只由**和的大小**决定，同一道题不允许出现两个难度档 ——
+# 否则同一道 4+5 会因为来自哪个文件而被判成不同的难度。
+
+items:
+  - code: s10_3_4
+    competency: sd_add_10
+    pattern: direct_compute
+    difficulty: 2
+    scaffold_level: direct
+    interaction_type: number_pad
+    estimated_seconds: 6
+    problem: {a: 3, b: 4, prompt: "3 + 4 = ?"}
+    answer: 7
+    steps: ["从 3 往后数 4 个"]
+    hint_chain: ["从 3 开始，往后数 4 个"]
+    error_rules:
+      - {code: counting_dependency, match: {answer_off_by: 1}}
+
+  - code: s10_5_2
+    competency: sd_add_10
+    pattern: direct_compute
+    difficulty: 2
+    scaffold_level: direct
+    interaction_type: number_pad
+    estimated_seconds: 6
+    problem: {a: 5, b: 2, prompt: "5 + 2 = ?"}
+    answer: 7
+    steps: ["从 5 往后数 2 个"]
+    hint_chain: ["从 5 开始，往后数 2 个"]
+    error_rules:
+      - {code: counting_dependency, match: {answer_off_by: 1}}
+
+  - code: s10_6_1
+    competency: sd_add_10
+    pattern: direct_compute
+    difficulty: 2
+    scaffold_level: direct
+    interaction_type: number_pad
+    estimated_seconds: 6
+    problem: {a: 6, b: 1, prompt: "6 + 1 = ?"}
+    answer: 7
+    steps: ["6 后面一个数"]
+    hint_chain: ["6 后面一个数是几？", "想想 6 往后数一个数"]
+    error_rules:
+      - {code: counting_dependency, match: {answer_off_by: 1}}
+
+  - code: s10_2_3
+    competency: sd_add_10
+    pattern: direct_compute
+    difficulty: 1
+    scaffold_level: direct
+    interaction_type: number_pad
+    estimated_seconds: 6
+    problem: {a: 2, b: 3, prompt: "2 + 3 = ?"}
+    answer: 5
+    steps: ["从 2 往后数 3 个"]
+    hint_chain: ["从 2 开始，往后数 3 个"]
+    error_rules:
+      - {code: counting_dependency, match: {answer_off_by: 1}}
+
+  - code: s10_4_5
+    competency: sd_add_10
+    pattern: direct_compute
+    difficulty: 1
+    scaffold_level: direct
+    interaction_type: number_pad
+    estimated_seconds: 6
+    problem: {a: 4, b: 5, prompt: "4 + 5 = ?"}
+    answer: 9
+    steps: ["从 4 往后数 5 个"]
+    hint_chain: ["从 4 开始，往后数 5 个"]
+    error_rules:
+      - {code: counting_dependency, match: {answer_off_by: 1}}
+
+  - code: s10_5_4
+    competency: sd_add_10
+    pattern: combine
+    difficulty: 1
+    scaffold_level: direct
+    interaction_type: number_pad
+    estimated_seconds: 10
+    problem: {a: 5, b: 4, prompt: "篮子里有 5 个苹果，又放进 4 个，一共有几个？"}
+    answer: 9
+    steps: ["求一共就是相加"]
+    hint_chain: ["「一共」要用加法，还是减法？"]
+    error_rules:
+      - {code: operation_confusion, match: {answer_equals: 1}}

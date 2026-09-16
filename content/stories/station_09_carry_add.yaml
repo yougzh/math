@@ -1,0 +1,79 @@
+# 数字车站 · 第 9 站：多出来的一个
+#
+# 目标能力：carry_add（进位加法）
+# 故事只回答"为什么做"：原来有多少、后来又来了多少，现在一共多少。
+# 故事语义确实要求"在原有基础上又多了多少"，所以 pattern 写死 increase。
+# beat 的 code 只写局部名，loader 会自动拼成 "{story_code}__{local}"。
+
+story:
+  code: station_09_carry_add
+  title: 数字车站 · 第 9 站：多出来的一个
+  universe: number_station
+  summary: 晚班车最挤，站台上的人一批接一批地来，座位还够不够呢？
+  order_index: 9
+  duration_min: 8
+  target_competencies: [carry_add]
+
+beats:
+  - code: b1
+    type: narration
+    character: 售票员小鹿
+    text: 晚上的车最热闹。站台上又排起了队，乘客一批接一批地来。
+  - code: b2
+    type: challenge
+    text: 车厢里原来坐着一批乘客，站台上又上来一批。现在一共有多少位？
+  - code: b3
+    type: narration
+    character: 小猫滴滴
+    text: 滴滴被人群挤得跳上行李架，尾巴垂下来，像一条小围巾。
+  - code: b4
+    type: challenge
+    text: 阿吉先搬上去一堆行李，又搬上去一堆。他一共搬了多少件行李？
+  - code: b5
+    type: narration
+    character: 行李员阿吉
+    text: 最后一节车厢的灯亮起来了，在夜里像一颗暖黄的星星。
+  - code: b6
+    type: challenge
+    text: 原来坐在车上的乘客，还有后来上车的乘客，今晚一共多少位坐这趟车？
+  - code: b7
+    type: reward
+    character: 小熊站长
+    text: 多出来的那一位，坐上了滴滴让出来的座位。火车安安静静地开走了。
+
+slots:
+  - code: st09_b2_carry_add
+    story_beat_id: station_09_carry_add__b2
+    competency: carry_add
+    pattern: increase
+    difficulty_min: 3
+    difficulty_max: 5
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 90
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st09_b4_carry_add
+    story_beat_id: station_09_carry_add__b4
+    competency: carry_add
+    pattern: increase
+    difficulty_min: 3
+    difficulty_max: 5
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 100
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st09_b6_carry_add
+    story_beat_id: station_09_carry_add__b6
+    competency: carry_add
+    pattern: increase
+    difficulty_min: 3
+    difficulty_max: 5
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 110
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}

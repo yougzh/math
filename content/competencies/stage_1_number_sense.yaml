@@ -1,0 +1,79 @@
+# 阶段 1：数字与数感 —— 能力节点
+#
+# 这是整个系统的知识骨架。Problem Pattern 挂在能力上，Item 挂在 Pattern 上，
+# 熟练度状态以能力为最小单位累积。
+#
+# prerequisites 定义 competency_prerequisite 边（有向：本能力 ← 前置能力）
+#
+# terms 是这个能力特有的说法。AI 教练的"不超纲"护栏靠它判断：
+# 讲凑十的时候说出"进位"两个字，说明教练跑到后面的能力去了。
+# 写 terms 的原则：只收**别的能力不会用到**的词，宁缺毋滥 —— 写宽了会误报，
+# 写窄了漏报（漏报比误报好，因为误报会拦住正常文案）。
+
+stage: 1
+name: 数字与数感
+description: 面向二三年级、基础偏弱孩子的底层能力补齐
+
+competencies:
+  - code: sd_add_10
+    name: 10 以内加法
+    description: 两个一位数相加，和不超过 10
+    prerequisites: []
+    terms: ["10 以内"]
+
+  - code: sd_sub_10
+    name: 10 以内减法
+    description: 10 以内减一位数
+    prerequisites: []
+    terms: ["10 以内减"]
+
+  - code: sd_add_20
+    name: 20 以内加法
+    description: 和超过 10 但不超过 20 的一位加法
+    # 20 以内加法**就是用凑十法做的**，所以必须先有凑十。
+    # 这条边是被 AI 教练的"不超纲"护栏发现的：教练文案里说"先凑成 10"，
+    # 而 sd_add_20 当时不含 make_ten 前置，于是被判成超纲。
+    # 漏掉这条边的后果不只是文案被拦 —— 孩子的升级门槛里也会少掉凑十这一关。
+    prerequisites: [sd_add_10, make_ten]
+    terms: ["20 以内"]
+
+  - code: sd_sub_20
+    name: 20 以内减法
+    description: 20 以内退位减法
+    prerequisites: [sd_sub_10]
+    terms: ["20 以内减"]
+
+  - code: make_ten
+    name: 凑十
+    description: 看到 8+5 能想到 8+2+3，把 10 当作跳板
+    prerequisites: [sd_add_10]
+    terms: ["凑十", "凑成 10", "补满十"]
+
+  - code: place_value
+    name: 十位与个位
+    description: 理解 23 = 2 个十 + 3 个一
+    prerequisites: []
+    terms: ["位值"]
+
+  - code: td_add_nocarry
+    name: 两位数加法（不进位）
+    description: 十位与十位相加、个位与个位相加
+    prerequisites: [place_value, sd_add_10]
+    terms: ["不进位", "两位数加"]
+
+  - code: td_sub_nocarry
+    name: 两位数减法（不退位）
+    prerequisites: [place_value, sd_sub_10]
+    terms: ["不退位", "两位数减"]
+
+  - code: carry_add
+    name: 进位加法
+    description: 个位相加满十，10 个一换 1 个十
+    prerequisites: [td_add_nocarry, make_ten, place_value]
+    terms: ["进位", "进一"]
+
+  - code: borrow_sub
+    name: 退位减法
+    description: 个位不够减，1 个十换 10 个一
+    prerequisites: [td_sub_nocarry, place_value]
+    terms: ["退位", "借位"]

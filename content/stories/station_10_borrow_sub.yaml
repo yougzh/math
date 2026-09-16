@@ -1,0 +1,78 @@
+# 数字车站 · 第 10 站：借一节车厢
+#
+# 目标能力：borrow_sub（退位减法）
+# 故事只回答"为什么做"：装不下、坐不下的时候，从别处借一点，再数剩下的。
+# beat 的 code 只写局部名，loader 会自动拼成 "{story_code}__{local}"。
+
+story:
+  code: station_10_borrow_sub
+  title: 数字车站 · 第 10 站：借一节车厢
+  universe: number_station
+  summary: 箱子装不下，小熊站长想办法借来地方；下车、搬走、用掉之后，把剩下的数清楚。
+  order_index: 10
+  duration_min: 8
+  target_competencies: [borrow_sub]
+
+beats:
+  - code: b1
+    type: narration
+    character: 行李员阿吉
+    text: 货车要出发了，可是箱子太多了，一节车厢怎么也装不下。
+  - code: b2
+    type: challenge
+    text: 阿吉先把一批箱子搬去别处。车上原本满满的，现在还剩下多少件？
+  - code: b3
+    type: narration
+    character: 小熊站长
+    text: 小熊站长想了想，说：“别急，我们跟旁边那节车厢借一点地方。”
+  - code: b4
+    type: challenge
+    text: 乘客到站下车了。车上原来坐着一批人，现在还剩多少位？
+  - code: b5
+    type: narration
+    character: 小猫滴滴
+    text: 滴滴趴在车窗上，看站台的灯一盏一盏往后退。
+  - code: b6
+    type: challenge
+    text: 票箱里的票用掉了一叠。还剩多少张？你帮小鹿数一数。
+  - code: b7
+    type: reward
+    character: 行李员阿吉
+    text: 车厢借到了，箱子全装上了。阿吉挥挥爪子：“明天见！”火车慢慢开出车站。
+
+slots:
+  - code: st10_b2_borrow_sub
+    story_beat_id: station_10_borrow_sub__b2
+    competency: borrow_sub
+    pattern: null
+    difficulty_min: 3
+    difficulty_max: 5
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 90
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st10_b4_borrow_sub
+    story_beat_id: station_10_borrow_sub__b4
+    competency: borrow_sub
+    pattern: null
+    difficulty_min: 3
+    difficulty_max: 5
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 100
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}
+
+  - code: st10_b6_borrow_sub
+    story_beat_id: station_10_borrow_sub__b6
+    competency: borrow_sub
+    pattern: null
+    difficulty_min: 3
+    difficulty_max: 5
+    scaffold_level: auto
+    purpose: story
+    estimated_seconds: 110
+    selection_policy: {avoid_recent: 3}
+    review_policy: {}

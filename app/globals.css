@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  基础体验基线（儿童端）
+  - 字号偏大、行距宽松
+  - 触屏友好：去掉点击高亮闪烁，禁止误双击缩放
+  - 不做任何闪烁 / 抖动类的强刺激动画
+*/
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+  }
+
+  body {
+    @apply bg-world-bg text-world-ink;
+    font-family:
+      "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui,
+      -apple-system, "Segoe UI", sans-serif;
+    font-size: 18px;
+    line-height: 1.7;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button {
+    touch-action: manipulation;
+  }
+
+  /* 键盘用户必须看得见焦点（无障碍硬要求） */
+  :focus-visible {
+    outline: 3px solid #5aa9e6;
+    outline-offset: 3px;
+    border-radius: 12px;
+  }
+
+  /* 尊重系统的「减少动态效果」 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* 儿童端主按钮：最小 56px 高，远超 44px 的可点下限 */
+  .kid-btn {
+    @apply inline-flex min-h-[56px] items-center justify-center gap-2 rounded-pill px-6
+      text-kid-lg font-bold transition active:translate-y-[2px] disabled:cursor-not-allowed;
+  }
+
+  .kid-card {
+    @apply rounded-kid bg-world-card p-5 shadow-soft;
+  }
+
+  /* 家长端沿用同一套原子类，但排版更克制 */
+  .parent-card {
+    @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  }
+}
