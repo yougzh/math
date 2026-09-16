@@ -20,6 +20,7 @@ import { loadBundle } from "@/src/content/loader";
 import {
   learnerAttemptFromDesc,
   learnerStateFromDesc,
+  learnerStateSnapshot,
 } from "../helpers/engine-probes";
 import type { LearnerAttemptDesc, LearnerStateDesc } from "../helpers/engine-probes";
 import type { ErrorRule, Item } from "@/src/content/types";
@@ -90,43 +91,6 @@ function cfgFor(name: LearnerSequence["config"]): AlgorithmConfig {
   throw new Error(`fixture 里有未知的配置名：${name}`);
 }
 
-/** TS 侧状态快照 —— 与 Python `_learner_state_snapshot` 逐字段同构 */
-function snapshot(state: ReturnType<typeof applyAttempt>): Record<string, unknown> {
-  return {
-    attempts_seen: state.attempts_seen,
-    assessment_attempts: state.assessment_attempts,
-    competencies: Object.fromEntries(
-      [...state.competencies.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(
-        ([code, s]) => [code, s.toDict()],
-      ),
-    ),
-    patterns: Object.fromEntries(
-      [...state.patterns.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(
-        ([key, s]) => [key, s.toDict()],
-      ),
-    ),
-    misconceptions: Object.fromEntries(
-      [...state.misconceptions.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(
-        ([code, m]) => [
-          code,
-          {
-            hit_count: m.hit_count,
-            last_seq: m.last_seq,
-            resolved: m.resolved,
-            remediation_competency: m.remediation_competency,
-          },
-        ],
-      ),
-    ),
-    recent_attempt_ids: state.recent_attempts.map((a) => a.attempt_id),
-    first_scaffold: Object.fromEntries(
-      [...state.first_scaffold.entries()].sort(([a], [b]) => (a < b ? -1 : 1)),
-    ),
-    last_touched_seq: Object.fromEntries(
-      [...state.last_touched_seq.entries()].sort(([a], [b]) => (a < b ? -1 : 1)),
-    ),
-  };
-}
 
 // ══════════════════════════════════════════════════════════
 describe("learner 对拍：前置一致性", () => {
@@ -202,13 +166,13 @@ describe("learner 对拍：逐条比较", () => {
       if (seq.id === "out_of_order_apply") {
         // 与 Python 同一条路径：整批乱序传入，内部按 seq 排
         const final = applyAttempts(state, attempts, bundle, cfgFor(seq.config));
-        expect(snapshot(final), `${seq.id} 的最终快照`).toStrictEqual(seq.steps[0]);
+        expect(learnerStateSnapshot(final), `${seq.id} 的最终快照`).toStrictEqual(seq.steps[0]);
       } else {
         expect(seq.steps.length).toBe(attempts.length);
         let current = state;
         attempts.forEach((attempt, i) => {
           current = applyAttempt(current, attempt, bundle, cfgFor(seq.config));
-          expect(snapshot(current), `${seq.id} 第 ${i + 1} 步`).toStrictEqual(seq.steps[i]);
+          expect(learnerStateSnapshot(current), `${seq.id} 第 ${i + 1} 步`).toStrictEqual(seq.steps[i]);
         });
       }
     });
@@ -230,6 +194,6 @@ describe("learner 对拍：逐条比较", () => {
         (current, attempt) => applyAttempt(current, attempt, bundle, cfg),
         learnerStateFromDesc({}, new Map<string, Attempt>()),
       );
-    expect(snapshot(viaBatch)).toStrictEqual(snapshot(viaSorted));
+    expect(learnerStateSnapshot(viaBatch)).toStrictEqual(learnerStateSnapshot(viaSorted));
   });
 });

@@ -28,7 +28,7 @@ export function effectiveScaffold(
   return cfg.scaffoldForMastery(mastery);
 }
 
-function recentCodes(state: ChildLearningState, window: number): string[] {
+export function recentCodes(state: ChildLearningState, window: number): string[] {
   if (window <= 0) {
     return [];
   }
@@ -43,7 +43,7 @@ function recentCodes(state: ChildLearningState, window: number): string[] {
  * 会把整池都排除掉，此时若按难度重新排一遍，选出来的永远是同一道题 ——
  * 这正是"跨天重复同一道题"在池子小的能力上反而更严重的原因。
  */
-function staleness(item: Item, history: readonly string[]): number {
+export function staleness(item: Item, history: readonly string[]): number {
   let last = -1;
   for (let index = 0; index < history.length; index += 1) {
     if (history[index] === item.code) {
@@ -60,7 +60,7 @@ function staleness(item: Item, history: readonly string[]): number {
  * 其余情况再套一层配置下限 —— 一天的计划整批生成、窗口只数"最近 N 次作答"，
  * 小于一天的窗口挡不住"昨天做过、今天又排第一"的题（Q6 的机制）。
  */
-function avoidRecentWindow(slot: ChallengeSlot, cfg: AlgorithmConfig): number {
+export function avoidRecentWindow(slot: ChallengeSlot, cfg: AlgorithmConfig): number {
   const policy = slot.selection_policy ?? {};
   const declared =
     "avoid_recent" in policy
@@ -78,7 +78,7 @@ function avoidRecentWindow(slot: ChallengeSlot, cfg: AlgorithmConfig): number {
  * 只按能力过滤，不区分 slot：难度是**能力内标尺**，同一能力的题共用一把尺子。
  * 跨能力切换时不套用这个值（见 `difficultyStep` 的说明）。
  */
-function lastDifficulty(
+export function lastDifficulty(
   state: ChildLearningState,
   bundle: ContentBundle,
   competency_id: string,
@@ -109,7 +109,7 @@ function lastDifficulty(
  * 自己的熟练度目标决定（`targetDifficulty` + slot 区间），否则会把一个能力的
  * 难度标尺外推到另一个能力上。
  */
-function difficultyStep(
+export function difficultyStep(
   slot: ChallengeSlot,
   last: number | null,
   cfg: AlgorithmConfig,
@@ -124,7 +124,7 @@ function difficultyStep(
 }
 
 /** 难度相对阶梯的位置：0 = 阶梯内；1 = 更简单（回撤）；2 = 跳级。 */
-function zone(difficulty: number, floor: number, ceil: number): number {
+export function zone(difficulty: number, floor: number, ceil: number): number {
   if (difficulty > ceil) {
     return 2;
   }
@@ -140,7 +140,7 @@ function zone(difficulty: number, floor: number, ceil: number): number {
  * 区间本身（difficulty_min / difficulty_max）是 slot 的权威声明，
  * 这里只决定落在区间里的哪个位置。
  */
-function targetDifficulty(
+export function targetDifficulty(
   slot: ChallengeSlot,
   state: ChildLearningState,
   cfg: AlgorithmConfig,
@@ -151,7 +151,7 @@ function targetDifficulty(
 }
 
 /** 优先精确匹配；匹配不到时按"离目标最近"的顺序放宽。 */
-function scaffoldOrder(preferred: string): string[] {
+export function scaffoldOrder(preferred: string): string[] {
   if (!SCAFFOLD_LEVELS.includes(preferred as (typeof SCAFFOLD_LEVELS)[number])) {
     return [...SCAFFOLD_LEVELS];
   }
@@ -164,7 +164,7 @@ function scaffoldOrder(preferred: string): string[] {
 }
 
 /** 该能力下已经练过的问题结构（pattern 状态键含 competency）。 */
-function triedPatterns(state: ChildLearningState, competency_id: string): Set<string> {
+export function triedPatterns(state: ChildLearningState, competency_id: string): Set<string> {
   const out = new Set<string>();
   for (const key of state.patterns.keys()) {
     const [competency, pattern] = splitPatternKey(key);
@@ -175,7 +175,7 @@ function triedPatterns(state: ChildLearningState, competency_id: string): Set<st
   return out;
 }
 
-function pool(
+export function pool(
   slot: ChallengeSlot,
   bundle: ContentBundle,
   scaffold: string,
@@ -197,7 +197,7 @@ function pool(
 }
 
 /** 按 selection_policy 决定本次用哪个 pattern。null 表示不约束。 */
-function pickPattern(
+export function pickPattern(
   slot: ChallengeSlot,
   state: ChildLearningState,
   bundle: ContentBundle,
@@ -211,8 +211,14 @@ function pickPattern(
   }
 
   const tried = triedPatterns(state, slot.competency_id);
+  // Python: {i.pattern_id for i in _pool(...) if i.pattern_id not in tried}
+  // —— 只保留没试过的结构；少了这层过滤，迁移探针会反复撞已练过的 pattern
   const untriedInPool = [
-    ...new Set(pool(slot, bundle, scaffold, null).map((i) => i.pattern_id)),
+    ...new Set(
+      pool(slot, bundle, scaffold, null)
+        .filter((i) => !tried.has(i.pattern_id))
+        .map((i) => i.pattern_id),
+    ),
   ].sort();
   if (untriedInPool.length > 0) {
     return untriedInPool[0]!;
@@ -247,7 +253,7 @@ function pickPattern(
  * "放宽 pattern 的一批"），优先级由**调用顺序**表达，本函数在第一批里
  * 找到就走，不跨批比较。
  */
-function pickFromPools(
+export function pickFromPools(
   pools: Item[][],
   step: readonly [number, number] | null,
   desired: number,

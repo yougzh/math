@@ -3448,6 +3448,1091 @@ def dump_replay() -> str:
     )
 
 
+# ── selector / intent / planner ────────────────────────────
+#
+# 这三段是「决策链」的对拍：Child State → Intent → Plan → Slot → Item。
+#
+# selector 用**全定制小 bundle**：题量少到每条分支都可钉（pattern 契约②步、
+# 难度阶梯、避重、staleness、prefer_untried_pattern、scaffold 放宽）。
+# 真实内容 1373 道题跑一遍，每条分支的输入都是"恰好撞上"，不可控；
+# 定制 bundle 的每一道题都是为某条分支摆的，TS 侧照同一份描述构造同构池。
+#
+# intent / planner 用**真实 bundle + 声明式 state**：这两层的输入是能力状态，
+# 输出要经过真实图谱（topo、prerequisites）、真实故事与真实槽位才有代表性。
+# planner 另注入 fx_ 前缀的 slot/story（order_index=0 接管 make_ten 的故事段），
+# 用来钉"节拍挂不到 slot""候选池为空""复习槽位写死别的 pattern"这些 note 文案。
+#
+# notes 是**逐字对拍**的重灾区：Python str(None)="None"、str(list)="['a', 'b']"
+# 的格式化习惯都活在 note 里，TS 侧照抄字符串模板时最容易在这里走样。
+
+SELECTOR_COMPETENCIES = [
+    {"code": "c_a", "name": "能力甲", "stage": 1},
+    {"code": "c_b", "name": "能力乙", "stage": 1},
+]
+
+SELECTOR_PATTERNS = [
+    {"code": "p1", "name": "结构一", "cognitive_type": "procedure", "primary_competency": "c_a"},
+    {"code": "p2", "name": "结构二", "cognitive_type": "procedure", "primary_competency": "c_a"},
+    {"code": "p3", "name": "结构三", "cognitive_type": "procedure", "primary_competency": "c_b"},
+]
+
+# 7 道题各伺候一条分支：b1/b2/d1/d2/d3 是 p1 的难度×脚手架矩阵，
+# p2_d2 是"pattern 契约②步"的唯一弹药，b3_cb 挂在 c_b 上验证池按能力过滤。
+SELECTOR_ITEM_DESCS = [
+    {"code": "fx_i_b1", "competency": "c_a", "pattern": "p1", "scaffold": "blocks", "difficulty": 1},
+    {"code": "fx_i_b2", "competency": "c_a", "pattern": "p1", "scaffold": "blocks", "difficulty": 2},
+    {"code": "fx_i_d1", "competency": "c_a", "pattern": "p1", "scaffold": "direct", "difficulty": 1},
+    {"code": "fx_i_d2", "competency": "c_a", "pattern": "p1", "scaffold": "direct", "difficulty": 2},
+    {"code": "fx_i_d3", "competency": "c_a", "pattern": "p1", "scaffold": "direct", "difficulty": 3},
+    {"code": "fx_i_p2_d2", "competency": "c_a", "pattern": "p2", "scaffold": "direct", "difficulty": 2},
+    {"code": "fx_i_b3_cb", "competency": "c_b", "pattern": "p3", "scaffold": "blocks", "difficulty": 3},
+]
+
+SELECTOR_SLOT_DESCS = [
+    {"code": "fx_slot_main", "competency": "c_a", "min": 1, "max": 4},
+    {"code": "fx_slot_p2", "competency": "c_a", "min": 1, "max": 4, "pattern": "p2"},
+    # c_a 没有 p3 的题 —— 钉"放宽 pattern"分支
+    {"code": "fx_slot_p3", "competency": "c_a", "min": 1, "max": 4, "pattern": "p3"},
+    {"code": "fx_slot_tight", "competency": "c_a", "min": 1, "max": 1},
+    # 区间里只有 d3：空状态（scaffold=blocks）在 blocks 档无题 → 放宽到 direct
+    {"code": "fx_slot_d3", "competency": "c_a", "min": 3, "max": 3},
+    {"code": "fx_slot_direct", "competency": "c_a", "min": 1, "max": 4, "scaffold": "direct"},
+    {"code": "fx_slot_avoid0", "competency": "c_a", "min": 1, "max": 4, "policy": {"avoid_recent": 0}},
+    {"code": "fx_slot_avoid1", "competency": "c_a", "min": 1, "max": 4, "policy": {"avoid_recent": 1}},
+    {"code": "fx_slot_untried", "competency": "c_a", "min": 1, "max": 4, "policy": {"prefer_untried_pattern": True}},
+    {"code": "fx_slot_b", "competency": "c_b", "min": 1, "max": 4},
+]
+
+# recent_attempts 行的缺省值（两侧构造 Attempt 必须同参）
+SELECTOR_ATTEMPT_DEFAULTS = {
+    "competency": "c_a",
+    "pattern": "p1",
+    "correct": True,
+    "hints": 0,
+    "response_ms": 6000,
+    "active_ms": 1000,
+    "idle_ms": 0,
+    "scaffold": "direct",
+    "interaction": "number_pad",
+    "is_assessment": False,
+    "is_transfer_probe": False,
+}
+
+SELECTOR_CASES = [
+    {
+        "id": "cold_blocks",
+        "note": "空状态：scaffold=blocks，desired=区间下界 → 最简单的 blocks 题",
+        "slot": "fx_slot_main",
+        "initial": {},
+    },
+    {
+        "id": "high_mastery_direct",
+        "note": "mastery 0.95 → scaffold=direct，desired 顶到高难度",
+        "slot": "fx_slot_main",
+        "initial": {"competencies": {"c_a": {"mastery": 0.95, "sample_count": 10}}},
+    },
+    {
+        "id": "mid_mastery_d2",
+        "note": "mastery 0.5 → 中间难度",
+        "slot": "fx_slot_main",
+        "initial": {"competencies": {"c_a": {"mastery": 0.5, "sample_count": 6}}},
+    },
+    {
+        "id": "avoid_recent_skips_fresh",
+        "note": "刚做过 d3/b2，阶梯 [2,3] 内 fresh=[d2] → 避重跳过刚做的",
+        "slot": "fx_slot_main",
+        "initial": {
+            "competencies": {"c_a": {"mastery": 0.95, "sample_count": 10}},
+            "recent_attempts": [
+                {"item": "fx_i_d3", "seq": 1},
+                {"item": "fx_i_b2", "seq": 2},
+            ],
+        },
+    },
+    {
+        "id": "staleness_repeats_within_ladder",
+        "note": "阶梯 [3,4] 内只有 d3 且刚做过 → 宁重复、不降级（staleness 兜底）",
+        "slot": "fx_slot_main",
+        "initial": {
+            "competencies": {"c_a": {"mastery": 0.95, "sample_count": 10}},
+            "recent_attempts": [{"item": "fx_i_d3", "seq": 1}],
+        },
+    },
+    {
+        "id": "staleness_when_pool_all_seen",
+        "note": "整池都做过（池 2 题、窗口 8）→ 按 staleness 挑最久没做的",
+        "slot": "fx_slot_tight",
+        "initial": {
+            "recent_attempts": [
+                {"item": "fx_i_d1", "seq": 1},
+                {"item": "fx_i_b1", "seq": 2},
+            ],
+        },
+    },
+    {
+        "id": "pattern_contract_beats_ladder",
+        "note": "pattern 契约②步：p2 只有难度 2 的题，阶梯 floor=3 也得用它",
+        "slot": "fx_slot_p2",
+        "initial": {
+            "recent_attempts": [
+                {"item": "fx_i_d3", "seq": 1, "competency": "c_a"},
+            ],
+        },
+    },
+    {
+        "id": "pattern_relax_when_empty",
+        "note": "c_a 没有 p3 题 → 放宽 pattern（仍是同一能力）",
+        "slot": "fx_slot_p3",
+        "initial": {},
+    },
+    {
+        "id": "scaffold_relax_nearest",
+        "note": "空状态 blocks 档在 [3,3] 无题 → scaffold_order 放宽到 direct",
+        "slot": "fx_slot_d3",
+        "initial": {},
+    },
+    {
+        "id": "prefer_untried_picks_p2",
+        "note": "policy 声明 + p1 试过 → 迁移探针换到 p2",
+        "slot": "fx_slot_untried",
+        "initial": {
+            "patterns": {"c_a::p1": {"mastery": 0.4, "sample_count": 3}},
+        },
+    },
+    {
+        "id": "untried_exhausted_returns_none_pattern",
+        "note": "p1/p2 都试过 → pick_pattern 返回 None（没有结构可换）",
+        "slot": "fx_slot_untried",
+        "initial": {
+            "patterns": {
+                "c_a::p1": {"mastery": 0.4, "sample_count": 3},
+                "c_a::p2": {"mastery": 0.4, "sample_count": 3},
+            },
+        },
+    },
+    {
+        "id": "explicit_scaffold",
+        "note": "槽位写死 direct → 不看熟练度",
+        "slot": "fx_slot_direct",
+        "initial": {},
+    },
+    {
+        "id": "avoid_zero_may_repeat",
+        "note": "avoid_recent=0 显式关闭避重 → 刚做过的题也在 fresh 里",
+        "slot": "fx_slot_avoid0",
+        "initial": {
+            "competencies": {"c_a": {"mastery": 0.95, "sample_count": 10}},
+            "recent_attempts": [{"item": "fx_i_d3", "seq": 1}],
+        },
+    },
+    {
+        "id": "avoid_one_clamped_to_min",
+        "note": "声明 1 被下限夹到 8 → d3 仍在避重窗口里（fresh=[d2]）；若没夹取会选 d3",
+        "slot": "fx_slot_avoid1",
+        "initial": {
+            "competencies": {"c_a": {"mastery": 0.95, "sample_count": 10}},
+            "recent_attempts": [
+                {"item": "fx_i_d3", "seq": 1},
+                {"item": "fx_i_b2", "seq": 2},
+            ],
+        },
+    },
+    {
+        "id": "select_items_excludes_within_group",
+        "note": "同槽连取 3 道：取的过程中排除已选",
+        "slot": "fx_slot_main",
+        "count": 3,
+        "initial": {},
+    },
+    {
+        "id": "exclude_codes_across_slots",
+        "note": "跨槽位排除表：d3/b2 已排给别的段 → 从候选里消失",
+        "slot": "fx_slot_main",
+        "count": 2,
+        "exclude_codes": ["fx_i_d3", "fx_i_b2"],
+        "initial": {"competencies": {"c_a": {"mastery": 0.95, "sample_count": 10}}},
+    },
+    {
+        "id": "pool_filters_by_competency",
+        "note": "c_b 的槽只看 c_b 的题（fx_i_b3_cb）",
+        "slot": "fx_slot_b",
+        "initial": {},
+    },
+]
+
+SELECTOR_PROBES = [
+    # 函数级 probe：把私有函数的返回值逐个钉住，端到端 case 分不清"哪一步分叉"时用它定位。
+    {"id": "recent_codes_w2", "note": "窗口 2 只取最后两条", "kind": "recent_codes", "window": 2},
+    {"id": "recent_codes_w0", "note": "窗口 0 → 空表", "kind": "recent_codes", "window": 0},
+    {"id": "staleness_hit", "note": "d1 在历史 [d3, d1] 里最后一次出现在下标 1", "kind": "staleness", "item": "fx_i_d1"},
+    {"id": "staleness_miss", "note": "b1 不在历史里 → -1", "kind": "staleness", "item": "fx_i_b1"},
+    {"id": "avoid_default", "note": "默认声明 3，被下限 8 抬到 8", "kind": "avoid_recent", "slot": "fx_slot_main"},
+    {"id": "avoid_zero_explicit", "note": "显式 0 → 0（不受下限约束）", "kind": "avoid_recent", "slot": "fx_slot_avoid0"},
+    {"id": "avoid_one_clamped", "note": "声明 1 → 下限 8", "kind": "avoid_recent", "slot": "fx_slot_avoid1"},
+    {"id": "last_difficulty_hit", "note": "最近一条 c_a 作答是 d3 → 难度 3", "kind": "last_difficulty"},
+    {"id": "last_difficulty_unknown_item", "note": "作答指向不存在的题 → 跳过继续回溯", "kind": "last_difficulty", "prefix_unknown": True},
+    {"id": "last_difficulty_none", "note": "没做过 → None", "kind": "last_difficulty", "empty": True},
+    {"id": "step_no_last", "note": "无历史 → 阶梯就是槽位区间", "kind": "difficulty_step", "last": None, "slot": "fx_slot_main"},
+    {"id": "step_from_3", "note": "last=3，步长 1 → [3,4]", "kind": "difficulty_step", "last": 3, "slot": "fx_slot_main"},
+    {"id": "step_clamped", "note": "last=4 超过区间上界 → floor 夹到 1", "kind": "difficulty_step", "last": 4, "slot": "fx_slot_tight"},
+    {"id": "zone_in", "note": "阶梯内 → 0", "kind": "zone", "difficulty": 2, "floor": 1, "ceil": 3},
+    {"id": "zone_below", "note": "比 floor 简单 → 1", "kind": "zone", "difficulty": 0, "floor": 1, "ceil": 3},
+    {"id": "zone_above", "note": "跳级 → 2", "kind": "zone", "difficulty": 4, "floor": 1, "ceil": 3},
+    {"id": "target_difficulty_null", "note": "无 mastery → unknown_position", "kind": "target_difficulty", "mastery": None},
+    {"id": "target_difficulty_low", "note": "mastery 0.25（低于 floor 0.5）→ 区间下界", "kind": "target_difficulty", "mastery": 0.25},
+    {"id": "target_difficulty_mid", "note": "mastery 0.75 → 区间内线性位置", "kind": "target_difficulty", "mastery": 0.75},
+    {"id": "target_difficulty_high", "note": "mastery 1.0 → 区间上界", "kind": "target_difficulty", "mastery": 1.0},
+    {"id": "scaffold_order_blocks", "note": "blocks 优先，其余按距离", "kind": "scaffold_order", "preferred": "blocks"},
+    {"id": "scaffold_order_unknown", "note": "auto 不在档位表 → 原序", "kind": "scaffold_order", "preferred": "auto"},
+    {"id": "tried_patterns", "note": "只数 c_a 名下的 pattern", "kind": "tried_patterns"},
+    {"id": "pick_pattern_unconstrained", "note": "槽位无 pattern、无 policy → None", "kind": "pick_pattern", "slot": "fx_slot_main"},
+    {"id": "pick_pattern_slot_fixed", "note": "槽位写死 p2 → 原样返回", "kind": "pick_pattern", "slot": "fx_slot_p2"},
+    {"id": "pick_pattern_untried", "note": "p1 试过 → 换 p2", "kind": "pick_pattern", "slot": "fx_slot_untried", "with_untried_state": True},
+]
+
+
+def _selector_bundle():
+    """定制小 bundle —— 与 TS 侧 buildSelectorBundle 同构，实体清单见上方描述。"""
+    from backend.content.loader import AUTO_SCAFFOLD, ChallengeSlot, Competency, ContentBundle, Item, Pattern
+
+    bundle = ContentBundle()
+    for row in SELECTOR_COMPETENCIES:
+        bundle.competencies[row["code"]] = Competency(
+            code=row["code"], name=row["name"], stage=row["stage"]
+        )
+    for row in SELECTOR_PATTERNS:
+        bundle.patterns[row["code"]] = Pattern(
+            code=row["code"],
+            name=row["name"],
+            cognitive_type=row["cognitive_type"],
+            primary_competency=row["primary_competency"],
+        )
+    for row in SELECTOR_ITEM_DESCS:
+        bundle.items[row["code"]] = Item(
+            code=row["code"],
+            competency_id=row["competency"],
+            pattern_id=row["pattern"],
+            difficulty=row["difficulty"],
+            scaffold_level=row["scaffold"],
+            interaction_type="number_pad",
+            estimated_seconds=6,
+            problem={"prompt": "{} 占位题面".format(row["code"])},
+            answer=None,
+        )
+    for row in SELECTOR_SLOT_DESCS:
+        bundle.slots[row["code"]] = ChallengeSlot(
+            code=row["code"],
+            competency_id=row["competency"],
+            difficulty_min=row["min"],
+            difficulty_max=row["max"],
+            pattern_id=row.get("pattern"),
+            scaffold_level=row.get("scaffold", AUTO_SCAFFOLD),
+            selection_policy=dict(row.get("policy", {})),
+        )
+    return bundle
+
+
+def _sel_state_from(desc):
+    """声明式状态 → ChildLearningState（recent_attempts 支持指定 item）。"""
+    from backend.engine.types import Attempt, ChildLearningState, Telemetry
+
+    state = ChildLearningState(child_id="child_sel")
+    for code, signals in desc.get("competencies", {}).items():
+        state.competencies[code] = _engine_signals_from(_signals_desc(**signals))
+    for key, signals in desc.get("patterns", {}).items():
+        state.patterns[key] = _engine_signals_from(_signals_desc(**signals))
+    for row in desc.get("recent_attempts", []):
+        params = dict(SELECTOR_ATTEMPT_DEFAULTS)
+        params.update(row)
+        state.recent_attempts.append(
+            Attempt(
+                attempt_id="att_{}".format(params.get("seq", 0)),
+                child_id="child_sel",
+                item_id=params["item"],
+                competency_id=params["competency"],
+                pattern_id=params["pattern"],
+                correct=params["correct"],
+                telemetry=Telemetry(
+                    response_time_ms=params["response_ms"],
+                    active_time_ms=params["active_ms"],
+                    idle_time_ms=params["idle_ms"],
+                ),
+                seq=params.get("seq", 0),
+                hints_used=params["hints"],
+                scaffold_level=params["scaffold"],
+                interaction_type=params["interaction"],
+                is_assessment=params["is_assessment"],
+                is_transfer_probe=params["is_transfer_probe"],
+            )
+        )
+    for code, seq in desc.get("last_touched_seq", {}).items():
+        state.last_touched_seq[code] = seq
+    return state
+
+
+def dump_selector() -> str:
+    """选题器的分支对拍：端到端 select_item/select_items + 函数级 probe。"""
+    from backend.engine.config import load_config
+    from backend.engine.graph import CompetencyGraph
+    from backend.engine.selector import (
+        _avoid_recent_window,
+        _difficulty_step,
+        _last_difficulty,
+        _pick_pattern,
+        _recent_codes,
+        _scaffold_order,
+        _staleness,
+        _target_difficulty,
+        _tried_patterns,
+        _zone,
+        select_item,
+        select_items,
+    )
+
+    cfg = load_config(0)
+    bundle = _selector_bundle()
+    graph = CompetencyGraph(bundle)
+
+    cases = []
+    for spec in SELECTOR_CASES:
+        state = _sel_state_from(spec.get("initial", {}))
+        slot = bundle.slots[spec["slot"]]
+        count = spec.get("count", 1)
+        exclude = spec.get("exclude_codes")
+        if count == 1:
+            picked_item = select_item(slot, state, bundle, cfg, exclude_codes=exclude)
+            picked = [picked_item.code] if picked_item is not None else None
+        else:
+            picked = [i.code for i in select_items(slot, state, bundle, cfg, count, exclude_codes=exclude)]
+        cases.append(
+            {
+                "id": spec["id"],
+                "note": spec["note"],
+                "slot": spec["slot"],
+                "initial": spec.get("initial", {}),
+                "count": count,
+                "exclude_codes": list(exclude or []),
+                "picked": picked,
+            }
+        )
+
+    # probe 共享一个"有历史、半熟"的状态
+    probe_state = _sel_state_from(
+        {
+            "competencies": {"c_a": {"mastery": 0.5, "sample_count": 6}},
+            "patterns": {"c_a::p1": {"mastery": 0.4, "sample_count": 3}},
+            "recent_attempts": [
+                {"item": "fx_i_d3", "seq": 1},
+                {"item": "fx_i_d1", "seq": 2},
+            ],
+        }
+    )
+    empty_state = _sel_state_from({})
+    probe_history = [a.item_id for a in probe_state.recent_attempts]
+    probes = []
+    for spec in SELECTOR_PROBES:
+        kind = spec["kind"]
+        if kind == "recent_codes":
+            result = _recent_codes(probe_state, spec["window"])
+        elif kind == "staleness":
+            result = _staleness(bundle.items[spec["item"]], probe_history)
+        elif kind == "avoid_recent":
+            result = _avoid_recent_window(bundle.slots[spec["slot"]], cfg)
+        elif kind == "last_difficulty":
+            if spec.get("empty"):
+                st = empty_state
+            elif spec.get("prefix_unknown"):
+                st = _sel_state_from(
+                    {"recent_attempts": [
+                        {"item": "ghost_item", "seq": 1, "competency": "c_a"},
+                        {"item": "fx_i_d3", "seq": 2},
+                    ]}
+                )
+            else:
+                st = probe_state
+            result = _last_difficulty(st, bundle, "c_a")
+        elif kind == "difficulty_step":
+            result = list(_difficulty_step(bundle.slots[spec["slot"]], spec["last"], cfg))
+        elif kind == "zone":
+            result = _zone(spec["difficulty"], spec["floor"], spec["ceil"])
+        elif kind == "target_difficulty":
+            st = empty_state
+            if spec["mastery"] is not None:
+                st = _sel_state_from(
+                    {"competencies": {"c_a": {"mastery": spec["mastery"], "sample_count": 6}}}
+                )
+            result = _target_difficulty(bundle.slots["fx_slot_main"], st, cfg)
+        elif kind == "scaffold_order":
+            result = _scaffold_order(spec["preferred"])
+        elif kind == "tried_patterns":
+            result = sorted(_tried_patterns(probe_state, "c_a"))
+        elif kind == "pick_pattern":
+            st = probe_state if spec.get("with_untried_state") else probe_state
+            result = _pick_pattern(bundle.slots[spec["slot"]], st, bundle, "direct")
+        else:
+            raise SystemExit("未知 probe：{}".format(kind))
+        probes.append({"id": spec["id"], "note": spec["note"], "result": result})
+
+    return _write(
+        "selector_parity.json",
+        {
+            "config_version": cfg.version,
+            "competencies": SELECTOR_COMPETENCIES,
+            "patterns": SELECTOR_PATTERNS,
+            "items": SELECTOR_ITEM_DESCS,
+            "slots": SELECTOR_SLOT_DESCS,
+            "cases": cases,
+            "probes": probes,
+        },
+    )
+
+
+# ── intent ─────────────────────────────────────────────────
+# derive_intents 的每一支 warmup / repair / probe_transfer / strengthen_fluency /
+# teach 都要有一条 state 恰好踩中。descibe 的编号文案（"1. [warmup] ..."）也是
+# 对拍对象 —— 它是给家长看的，文案走样就是产品 bug。
+
+INTENT_CASES = [
+    {
+        "id": "cold_start",
+        "note": "空状态 → 只有 teach（topo 首个能力 place_value）",
+        "initial": {},
+    },
+    {
+        "id": "warmup_recall",
+        "note": "sd_add_10 已会未自动化（mastery 0.8、样本 10 ≤ 12）→ warmup",
+        "initial": {
+            "competencies": {
+                "sd_add_10": {"mastery": 0.8, "accuracy": 0.85, "sample_count": 10},
+                "make_ten": {"mastery": 0.4, "accuracy": 0.6, "sample_count": 5},
+            },
+        },
+    },
+    {
+        "id": "warmup_excluded_automated",
+        "note": "样本 13 > 12 → 视为已自动化，warmup 不选它",
+        "initial": {
+            "competencies": {
+                "sd_add_10": {"mastery": 0.8, "accuracy": 0.85, "sample_count": 13},
+                "make_ten": {"mastery": 0.4, "accuracy": 0.6, "sample_count": 5},
+            },
+        },
+    },
+    {
+        "id": "probe_transfer_when_ready",
+        "note": "mastery 0.65 达 probe 线（0.6）但未到升级线（0.75）+ reverse 没试过 + transfer 无证据 → probe_transfer 与 teach 并存",
+        "initial": {
+            "competencies": {
+                "make_ten": {
+                    "mastery": 0.65, "accuracy": 0.9, "fluency": 0.9,
+                    "independence": 0.9, "transfer": 0.9, "sample_count": 12,
+                },
+            },
+            "patterns": {
+                "make_ten::direct_compute": {"mastery": 0.9, "sample_count": 6},
+                "make_ten::decompose": {"mastery": 0.9, "sample_count": 6},
+                "make_ten::number_friends": {"mastery": 0.9, "sample_count": 6},
+                "make_ten::increase": {"mastery": 0.9, "sample_count": 6},
+                "make_ten::total": {"mastery": 0.9, "sample_count": 6},
+                "make_ten::missing_part": {"mastery": 0.9, "sample_count": 6},
+            },
+            "last_touched_seq": {"make_ten": 12},
+        },
+    },
+    {
+        "id": "strengthen_fluency",
+        "note": "mastery 0.7 会做，fluency 0.2 太慢（< 0.6×1.0）→ strengthen_fluency 与 teach 并存",
+        "initial": {
+            "competencies": {
+                "make_ten": {
+                    "mastery": 0.7, "accuracy": 0.9, "fluency": 0.2,
+                    "independence": 0.9, "sample_count": 10,
+                },
+            },
+            "last_touched_seq": {"make_ten": 10},
+        },
+    },
+    {
+        "id": "repair_after_consecutive_wrong",
+        "note": "make_ten 连错 3 次 → 回退到最弱前置 sd_add_10（repair 优先于 teach）",
+        "initial": {
+            "competencies": {
+                "sd_add_10": {"mastery": 0.5, "sample_count": 8},
+                "make_ten": {"mastery": 0.4, "accuracy": 0.3, "sample_count": 9},
+            },
+            "recent_attempts": [
+                {"item": "m1", "competency": "make_ten", "seq": 1, "correct": False},
+                {"item": "m2", "competency": "make_ten", "seq": 2, "correct": False},
+                {"item": "m3", "competency": "make_ten", "seq": 3, "correct": False},
+            ],
+            "last_touched_seq": {"make_ten": 3},
+        },
+    },
+    {
+        "id": "mixed_full",
+        "note": "warmup + strengthen_fluency + teach 同场：排序按 (priority, kind)",
+        "initial": {
+            "competencies": {
+                "sd_add_10": {"mastery": 0.75, "accuracy": 0.8, "sample_count": 9},
+                "make_ten": {
+                    "mastery": 0.7, "accuracy": 0.9, "fluency": 0.2,
+                    "independence": 0.9, "sample_count": 10,
+                },
+            },
+            "last_touched_seq": {"make_ten": 10, "sd_add_10": 9},
+        },
+    },
+]
+
+
+def _intent_state_from(desc):
+    """intent/planner 共用的状态构造器（recent_attempts 指向虚拟 item）。"""
+    from backend.engine.types import Attempt, ChildLearningState, MisconceptionState, Telemetry
+
+    state = ChildLearningState(child_id="child_intent")
+    for code, signals in desc.get("competencies", {}).items():
+        state.competencies[code] = _engine_signals_from(_signals_desc(**signals))
+    for key, signals in desc.get("patterns", {}).items():
+        state.patterns[key] = _engine_signals_from(_signals_desc(**signals))
+    for misc in desc.get("misconceptions", []):
+        created = MisconceptionState(code=misc["code"])
+        created.hit_count = misc.get("hit_count", 0)
+        created.last_seq = misc.get("last_seq")
+        created.resolved = misc.get("resolved", False)
+        created.remediation_competency = misc.get("remediation_competency")
+        state.misconceptions[created.code] = created
+    for row in desc.get("recent_attempts", []):
+        state.recent_attempts.append(
+            Attempt(
+                attempt_id="att_{}".format(row.get("seq", 0)),
+                child_id="child_intent",
+                item_id=row.get("item", "ghost_item"),
+                competency_id=row.get("competency", "make_ten"),
+                pattern_id=row.get("pattern", "direct_compute"),
+                correct=row.get("correct", True),
+                telemetry=Telemetry(response_time_ms=6000, active_time_ms=1000),
+                seq=row.get("seq", 0),
+                hints_used=row.get("hints", 0),
+            )
+        )
+    state.attempts_seen = desc.get("attempts_seen", 0)
+    state.assessment_attempts = desc.get("assessment_attempts", 0)
+    for code, scaffold in desc.get("first_scaffold", {}).items():
+        state.first_scaffold[code] = scaffold
+    for code, seq in desc.get("last_touched_seq", {}).items():
+        state.last_touched_seq[code] = seq
+    return state
+
+
+def _intent_to_dict(intent):
+    return {
+        "kind": intent.kind,
+        "competency_id": intent.competency_id,
+        "reason": intent.reason,
+        "pattern_id": intent.pattern_id,
+        "scaffold_level": intent.scaffold_level,
+        "target_seconds": intent.target_seconds,
+        "priority": intent.priority,
+    }
+
+
+def dump_intent() -> str:
+    """意图层的分支对拍：derive_intents 全量 + describe_intents 文案。"""
+    from backend.content.loader import load_bundle
+    from backend.engine.config import load_config
+    from backend.engine.graph import CompetencyGraph
+    from backend.engine.intent import derive_intents, describe_intents
+
+    cfg = load_config(0)
+    bundle = load_bundle()
+    graph = CompetencyGraph(bundle)
+
+    cases = []
+    for spec in INTENT_CASES:
+        state = _intent_state_from(spec["initial"])
+        intents = derive_intents(state, graph, bundle, cfg)
+        cases.append(
+            {
+                "id": spec["id"],
+                "note": spec["note"],
+                "initial": spec["initial"],
+                "intents": [_intent_to_dict(i) for i in intents],
+                "described": describe_intents(intents),
+            }
+        )
+
+    return _write(
+        "intent_parity.json",
+        {"config_version": cfg.version, "cases": cases},
+    )
+
+
+# ── planner ────────────────────────────────────────────────
+# build_daily_plan 的对拍吃三样输入：声明式 state、due_reviews 描述、
+# case 级内容变异（hide_slots / drop_stories）。注入的 fx_story（order_index=0）
+# 接管 make_ten 的故事段：一个能落题的节拍、一个候选池为空的节拍、
+# 一个挂不上 slot 的节拍 —— 三种命运各有文案。
+
+PLANNER_ITEM_DESCS = [
+    {"code": "fx_pl_i1", "competency": "make_ten", "pattern": "decompose", "scaffold": "direct", "difficulty": 2},
+    {"code": "fx_pl_i2", "competency": "make_ten", "pattern": "number_friends", "scaffold": "direct", "difficulty": 2},
+]
+
+PLANNER_SLOT_DESCS = [
+    {"code": "fx_story_slot_a", "competency": "make_ten", "min": 1, "max": 3, "purpose": "story"},
+    # 难度 5-5：make_ten 在这个区间没有题 → 候选池为空
+    {"code": "fx_story_slot_b", "competency": "make_ten", "min": 5, "max": 5, "purpose": "story"},
+    # purpose=warmup 的槽位写死 number_friends —— 复习意图（reverse）拿到它时
+    # 会命中"槽位写死了别的 pattern → 复习无法落题"
+    {"code": "fx_warmup_fixed", "competency": "make_ten", "min": 1, "max": 4, "purpose": "warmup", "pattern": "number_friends"},
+]
+
+PLANNER_STORY_DESC = {
+    "code": "fx_story",
+    "title": "对拍小站",
+    "universe": "fx",
+    "summary": "对拍专用的故事",
+    "order_index": 0,
+    "duration_min": 4,
+    "target_competencies": ["make_ten"],
+    "beats": [
+        {"code": "fx_story__b1", "sequence": 1, "type": "narration", "narration": "开场白", "character": "小狐狸"},
+        {"code": "fx_story__b2", "sequence": 2, "type": "challenge", "slot": "fx_story_slot_a"},
+        {"code": "fx_story__b3", "sequence": 3, "type": "challenge", "slot": "fx_story_slot_b"},
+        {"code": "fx_story__b4", "sequence": 4, "type": "challenge", "slot": "fx_story_slot_missing"},
+        {"code": "fx_story__b5", "sequence": 5, "type": "reward"},
+    ],
+}
+
+PLANNER_REVIEW_DESCS = [
+    {"key": "rv1", "competency": "make_ten", "pattern": "decompose", "interval_index": 0,
+     "overdue_days": 2, "due_day": 6, "last_correct_day": 4, "consecutive_correct": 1},
+    {"key": "rv2", "competency": "make_ten", "pattern": "number_friends", "interval_index": 1,
+     "overdue_days": 1, "due_day": 7, "last_correct_day": 6, "consecutive_correct": 2},
+    {"key": "rv3", "competency": "make_ten", "pattern": "reverse", "interval_index": 2,
+     "overdue_days": 0, "due_day": 8, "last_correct_day": 8, "consecutive_correct": 3},
+]
+
+PLANNER_CASES = [
+    {
+        "id": "cold_start",
+        "note": "空状态：target=place_value，故事段用真实故事 station_04",
+        "initial": {},
+    },
+    {
+        "id": "mid_progress_with_story",
+        "note": "make_ten 进行中：story 段走 fx_story（三拍三种命运），warmup 召回 sd_add_10",
+        "initial": {
+            "competencies": {
+                "sd_add_10": {"mastery": 0.8, "accuracy": 0.85, "sample_count": 10},
+                "make_ten": {"mastery": 0.55, "accuracy": 0.7, "fluency": 0.5, "sample_count": 9},
+            },
+            "patterns": {
+                "make_ten::decompose": {"mastery": 0.6, "sample_count": 4},
+                "make_ten::direct_compute": {"mastery": 0.5, "sample_count": 3},
+            },
+            "attempts_seen": 14,
+            "first_scaffold": {"make_ten": "blocks"},
+            "last_touched_seq": {"make_ten": 14, "sd_add_10": 10},
+        },
+    },
+    {
+        "id": "budget_clamp_low",
+        "note": "请求 2 分钟 → 夹到下限 10",
+        "budget_minutes": 2,
+        "initial": {},
+    },
+    {
+        "id": "budget_clamp_high",
+        "note": "请求 99 分钟 → 夹到上限 15",
+        "budget_minutes": 99,
+        "initial": {},
+    },
+    {
+        "id": "reviews_share_warmup",
+        "note": "2 项到期复习 ≤ warmup_item_count → 复习占满热身容量，常规热身被顶掉",
+        "due_reviews": ["rv1", "rv2"],
+        "initial": {
+            "competencies": {
+                "sd_add_10": {"mastery": 0.8, "accuracy": 0.85, "sample_count": 10},
+                "make_ten": {"mastery": 0.55, "accuracy": 0.7, "sample_count": 9},
+            },
+            "first_scaffold": {"make_ten": "blocks"},
+        },
+    },
+    {
+        "id": "reviews_overflow",
+        "note": "3 项复习 > 容量 2 → 常规热身整段消失，多出的复习也不新开段落",
+        "due_reviews": ["rv1", "rv2", "rv3"],
+        "initial": {
+            "competencies": {
+                "sd_add_10": {"mastery": 0.8, "accuracy": 0.85, "sample_count": 10},
+                "make_ten": {"mastery": 0.55, "accuracy": 0.7, "sample_count": 9},
+            },
+            "first_scaffold": {"make_ten": "blocks"},
+        },
+    },
+    {
+        "id": "review_pattern_blocked_by_slot",
+        "note": "隐藏 free 槽后 reverse 复习只落到写死 number_friends 的槽 → 复习无法落题",
+        "due_reviews": ["rv3"],
+        "hide_slots": ["core_make_ten_practice"],
+        "initial": {
+            "competencies": {"make_ten": {"mastery": 0.55, "accuracy": 0.7, "sample_count": 9}},
+            "first_scaffold": {"make_ten": "blocks"},
+        },
+    },
+    {
+        "id": "no_story_at_all",
+        "note": "整个内容库没有故事 → NOTE_NO_STORY_AT_ALL，比例重分配",
+        "drop_stories": True,
+        "initial": {
+            "competencies": {"make_ten": {"mastery": 0.55, "accuracy": 0.7, "sample_count": 9}},
+            "first_scaffold": {"make_ten": "blocks"},
+        },
+    },
+    {
+        "id": "no_story_for_target",
+        "note": "删掉 fx_story 后 place_value 等别人的故事帮不了 make_ten → NOTE_NO_STORY_FOR_TARGET",
+        "drop_stories": ["fx_story"],
+        "initial": {
+            "competencies": {"make_ten": {"mastery": 0.55, "accuracy": 0.7, "sample_count": 9}},
+            "first_scaffold": {"make_ten": "blocks"},
+        },
+    },
+    {
+        "id": "discovery_first_scaffold_progress",
+        "note": "first_scaffold=blocks 且现在 direct → 今日发现用进阶文案",
+        "initial": {
+            "competencies": {
+                "make_ten": {"mastery": 0.95, "accuracy": 0.95, "sample_count": 12},
+            },
+            "first_scaffold": {"make_ten": "blocks"},
+            "last_touched_seq": {"make_ten": 12},
+        },
+    },
+    {
+        "id": "discovery_accuracy_high",
+        "note": "accuracy ≥ 0.8 → 越来越顺文案",
+        "initial": {
+            "competencies": {
+                "make_ten": {"mastery": 0.6, "accuracy": 0.85, "sample_count": 9},
+            },
+            "last_touched_seq": {"make_ten": 9},
+        },
+    },
+    {
+        "id": "discovery_default",
+        "note": "都不满足 → 不止一种算法文案",
+        "initial": {
+            "competencies": {
+                "make_ten": {"mastery": 0.6, "accuracy": 0.5, "sample_count": 9},
+            },
+            "last_touched_seq": {"make_ten": 9},
+        },
+    },
+]
+
+
+def _planner_bundle(case):
+    """真实 bundle + fx 注入 + case 级变异。每 case 重建，互不污染。"""
+    from backend.content.loader import AUTO_SCAFFOLD, ChallengeSlot, Item, Story, StoryBeat, load_bundle
+
+    bundle = load_bundle()
+    for row in PLANNER_ITEM_DESCS:
+        bundle.items[row["code"]] = Item(
+            code=row["code"],
+            competency_id=row["competency"],
+            pattern_id=row["pattern"],
+            difficulty=row["difficulty"],
+            scaffold_level=row["scaffold"],
+            interaction_type="number_pad",
+            estimated_seconds=6,
+            problem={"prompt": "{} 占位题面".format(row["code"])},
+            answer=None,
+        )
+    for row in PLANNER_SLOT_DESCS:
+        bundle.slots[row["code"]] = ChallengeSlot(
+            code=row["code"],
+            competency_id=row["competency"],
+            difficulty_min=row["min"],
+            difficulty_max=row["max"],
+            purpose=row["purpose"],
+            pattern_id=row.get("pattern"),
+            scaffold_level=AUTO_SCAFFOLD,
+        )
+    story = Story(
+        code=PLANNER_STORY_DESC["code"],
+        title=PLANNER_STORY_DESC["title"],
+        universe=PLANNER_STORY_DESC["universe"],
+        summary=PLANNER_STORY_DESC["summary"],
+        order_index=PLANNER_STORY_DESC["order_index"],
+        duration_min=PLANNER_STORY_DESC["duration_min"],
+        target_competencies=list(PLANNER_STORY_DESC["target_competencies"]),
+    )
+    for row in PLANNER_STORY_DESC["beats"]:
+        story.beats.append(
+            StoryBeat(
+                code=row["code"],
+                story_code=story.code,
+                sequence=row["sequence"],
+                beat_type=row["type"],
+                narration=row.get("narration", ""),
+                character=row.get("character", ""),
+                slot_code=row.get("slot"),
+            )
+        )
+    bundle.stories[story.code] = story
+
+    for code in case.get("hide_slots", []):
+        bundle.slots.pop(code, None)
+    if case.get("drop_stories") is True:
+        bundle.stories.clear()
+    else:
+        for code in case.get("drop_stories", []):
+            bundle.stories.pop(code, None)
+    return bundle
+
+
+def _plan_to_dict(plan):
+    return {
+        "child_id": plan.child_id,
+        "budget_minutes": plan.budget_minutes,
+        "segments": [
+            {
+                "type": seg.type,
+                "budget_s": seg.budget_s,
+                "intents": [_intent_to_dict(i) for i in seg.intents],
+                "items": [i.code for i in seg.items],
+                "slot_code": seg.slot_code,
+                "scaffold_level": seg.scaffold_level,
+                "note": seg.note,
+                "story_code": seg.story_code,
+                "beats": [
+                    {
+                        "beat_code": b.beat_code,
+                        "slot_code": b.slot_code,
+                        "item_code": b.item_code,
+                    }
+                    for b in seg.beats
+                ],
+            }
+            for seg in plan.segments
+        ],
+        "intents": [_intent_to_dict(i) for i in plan.intents],
+        "discovery": plan.discovery,
+        "notes": list(plan.notes),
+    }
+
+
+def dump_planner() -> str:
+    """每日计划对拍：build_daily_plan 的完整 DailyPlan + render_plan 文本。"""
+    from backend.content.loader import load_bundle
+    from backend.engine.config import load_config
+    from backend.engine.graph import CompetencyGraph
+    from backend.engine.planner import build_daily_plan, render_plan
+    from backend.engine.scheduler import ReviewItem
+
+    cfg = load_config(0)
+    review_items = {
+        row["key"]: ReviewItem(
+            pattern_key="{}::{}".format(row["competency"], row["pattern"]),
+            competency_id=row["competency"],
+            pattern_id=row["pattern"],
+            due_day=row["due_day"],
+            interval_index=row["interval_index"],
+            last_correct_day=row["last_correct_day"],
+            consecutive_correct=row["consecutive_correct"],
+            overdue_days=row["overdue_days"],
+        )
+        for row in PLANNER_REVIEW_DESCS
+    }
+
+    cases = []
+    for spec in PLANNER_CASES:
+        bundle = _planner_bundle(spec)
+        graph = CompetencyGraph(bundle)
+        state = _intent_state_from(spec.get("initial", {}))
+        due = [review_items[key] for key in spec.get("due_reviews", [])]
+        plan = build_daily_plan(
+            state,
+            graph,
+            bundle,
+            cfg,
+            budget_minutes=spec.get("budget_minutes"),
+            due_reviews=due or None,
+        )
+        cases.append(
+            {
+                "id": spec["id"],
+                "note": spec["note"],
+                "initial": spec.get("initial", {}),
+                "budget_minutes": spec.get("budget_minutes"),
+                "due_reviews": list(spec.get("due_reviews", [])),
+                "hide_slots": list(spec.get("hide_slots", [])),
+                "drop_stories": spec.get("drop_stories", False),
+                "plan": _plan_to_dict(plan),
+                "render": render_plan(plan, graph, cfg),
+            }
+        )
+
+    return _write(
+        "planner_parity.json",
+        {
+            "config_version": cfg.version,
+            "items": PLANNER_ITEM_DESCS,
+            "slots": PLANNER_SLOT_DESCS,
+            "story": PLANNER_STORY_DESC,
+            "reviews": PLANNER_REVIEW_DESCS,
+            "cases": cases,
+        },
+    )
+
+
+# ── detective ──────────────────────────────────────────────
+#
+# 侦探模式是纯函数 + MT19937 种子：同一 puzzle_id 两侧必须重建出同一道题。
+# 对拍三层：
+#   1. 生成的谜题逐字（to_dict 全量 + solve/weak_clues + answer）；
+#   2. judge 的输入变体（" 7 " / "07" / "3.5" / None —— Python int(str) 的
+#      接受域就是判分的接受域）；
+#   3. **穷举扫描**：0..1999 × {auto, 3 kind} 全部种子生成成功且 validate()==[]，
+#      记录每个种子的顺延 offset —— 两侧的顺延序列必须逐项一致
+#      （validate/is_trivial 的任何分叉都会在这里现形）。
+
+DETECTIVE_SEEDS = list(range(1, 61)) + [0, 99, 999, 4096, 9999]
+DETECTIVE_FIXED_KIND_SEEDS = [1, 7, 42, 100, 777, 2026]
+DETECTIVE_SCAN_RANGE = 2000
+
+
+def _detective_case(pid, kind, reveal_count=None):
+    from backend.engine.detective import generate_puzzle
+
+    # reveal_count 变体覆盖夹取两端：None=默认 2；1=下限；99=上界
+    # （夹到 clues.length - 1 —— "谜题必须留悬念"的边界，变异测试靠它杀人）
+    kwargs = {} if reveal_count is None else {"reveal_count": reveal_count}
+    puzzle = generate_puzzle(pid, kind=kind, **kwargs)
+    return {
+        "puzzle_id": pid,
+        "kind": kind,
+        # None = 引擎默认 2；同 id 不同 reveal 的 case 靠它区分
+        "reveal_count": reveal_count,
+        "to_dict": puzzle.to_dict(),
+        "answer": puzzle.answer,
+        "solve": puzzle.solve(),
+        "validate": puzzle.validate(),
+        "weak_clues": puzzle.weak_clues(),
+    }
+
+
+def dump_detective() -> str:
+    from backend.engine.detective import (
+        ALL_KINDS,
+        generate_puzzle,
+        judge,
+        make_puzzle_id,
+        parse_puzzle_id,
+        reveal_after_attempt,
+    )
+
+    cases = []
+    for seed in DETECTIVE_SEEDS:
+        pid = make_puzzle_id(seed)
+        cases.append(_detective_case(pid, None))
+    for kind in ALL_KINDS:
+        for seed in DETECTIVE_FIXED_KIND_SEEDS:
+            cases.append(_detective_case(make_puzzle_id(seed), kind))
+    # reveal_count 的两端夹取（变异测试发现默认 case 全落在夹取死区里）：
+    # 1 = 下限；5 = 超过典型线索数 - 1 → 上界夹取生效（谜题必须留一档悬念）。
+    # 注：balance 在大 reveal_count 下 is_trivial 恒真，40 个种子全被顺延掉
+    # （RuntimeError）—— 夹取上界正是防这种"全部揭示"的保险丝，别用它试。
+    for reveal_count in (1, 5):
+        cases.append(
+            _detective_case(make_puzzle_id(3), None, reveal_count=reveal_count)
+        )
+        cases.append(
+            _detective_case(make_puzzle_id(100), "find_pattern", reveal_count=reveal_count)
+        )
+
+    # judge 的输入变体围绕"真实答案"构造（answer 本身就是 case 数据）。
+    # "9" 与 "{ans}9" 是给变异测试的：judge 的接受域是 [0-9]，缺了含 9 的
+    # 输入时，把字符类缩成 [0-8] 的变异不会被任何 fixture 杀死。
+    probe = generate_puzzle(make_puzzle_id(42))
+    ans = probe.answer
+    judge_inputs = [str(ans), " {} ".format(ans), "0{}".format(ans), "+{}".format(ans),
+                    "{}.0".format(ans), "abc", None, True, 3.5, -1, "",
+                    "9", "{}9".format(ans)]
+    judge_cases = [{"input": v, "expect": judge(probe, v)} for v in judge_inputs]
+
+    # 连错三次的揭示序列（多谜题取样，覆盖不同 kind）
+    reveal_cases = []
+    for pid, kind in [(make_puzzle_id(3), None), (make_puzzle_id(42), None),
+                      (make_puzzle_id(7), None),
+                      (make_puzzle_id(100), "balance")]:
+        puzzle = generate_puzzle(pid, kind=kind)
+        wrong = []
+        for _ in range(3):
+            wrong.extend(reveal_after_attempt(puzzle, correct=False))
+        right = reveal_after_attempt(puzzle, correct=True)
+        reveal_cases.append(
+            {"puzzle_id": pid, "kind": kind,
+             "wrong_reveals": wrong, "right_reveals": right,
+             "clues_remaining": puzzle.clues_remaining}
+        )
+
+    parse_cases = [
+        {"puzzle_id": "det_0042", "expect": parse_puzzle_id("det_0042")},
+        {"puzzle_id": "det_0", "expect": parse_puzzle_id("det_0")},
+        {"puzzle_id": "", "expect": parse_puzzle_id("")},
+        {"puzzle_id": "det_", "expect": parse_puzzle_id("det_")},
+        {"puzzle_id": "det_x", "expect": parse_puzzle_id("det_x")},
+        {"puzzle_id": "det_12x", "expect": parse_puzzle_id("det_12x")},
+        {"puzzle_id": "other_0042", "expect": parse_puzzle_id("other_0042")},
+        {"puzzle_id": "det_123456", "expect": parse_puzzle_id("det_123456")},
+    ]
+
+    # 穷举扫描：validate/is_trivial 的分叉会体现在顺延 offset 上
+    scan_kinds = [None] + list(ALL_KINDS)
+    scan = []
+    for kind in scan_kinds:
+        offsets = []
+        for seed in range(DETECTIVE_SCAN_RANGE):
+            base = make_puzzle_id(seed)
+            probe_puzzle = generate_puzzle(base, kind=kind)
+            # 顺延 offset 从 puzzle_id 无法直接读出（generate 返回后已被揭示），
+            # 这里用"重建时 validate 首个自洽种子的序号"重放同一搜索：
+            from backend.engine.detective import GENERATORS
+            import random as _random
+            offset = 0
+            for offset in range(40):
+                s = seed + offset
+                rng = _random.Random(s * 7919 + 13)
+                chosen = kind or ALL_KINDS[s % len(ALL_KINDS)]
+                p = GENERATORS[chosen](rng, make_puzzle_id(s))
+                if not p.validate():
+                    reveal = max(1, min(2, len(p.clues) - 1))
+                    if not p.is_trivial(reveal):
+                        break
+            else:
+                offset = -1
+            offsets.append(offset)
+        scan.append({"kind": kind, "offsets": offsets})
+
+    return _write(
+        "detective_parity.json",
+        {
+            "seeds": DETECTIVE_SEEDS,
+            "fixed_kind_seeds": DETECTIVE_FIXED_KIND_SEEDS,
+            "scan_range": DETECTIVE_SCAN_RANGE,
+            "cases": cases,
+            "judge_cases": judge_cases,
+            "reveal_cases": reveal_cases,
+            "parse_cases": parse_cases,
+            "scan": scan,
+        },
+    )
+
+
 # ── lint ───────────────────────────────────────────────────
 #
 # 为什么是「变异 + 对拍」而不是「拿真实内容跑一遍对拍」
@@ -3562,6 +4647,124 @@ def _apply_lint_ops(bundle, ops) -> list:
         else:
             raise SystemExit("未知的变异指令：{}".format(kind))
     return trace
+
+
+# ── simulate ───────────────────────────────────────────────
+def _sim_attempt_dict(a) -> dict:
+    """Attempt 的对拍投影 —— 只保留引擎真正消费的字段。"""
+    return {
+        "attempt_id": a.attempt_id,
+        "child_id": a.child_id,
+        "item_id": a.item_id,
+        "competency_id": a.competency_id,
+        "pattern_id": a.pattern_id,
+        "correct": a.correct,
+        "telemetry": a.telemetry.to_dict(),
+        "seq": a.seq,
+        "hints_used": a.hints_used,
+        "hint_level_max": a.hint_level_max,
+        "scaffold_level": a.scaffold_level,
+        "interaction_type": a.interaction_type,
+        "is_transfer_probe": a.is_transfer_probe,
+        "submitted_answer": a.submitted_answer,
+    }
+
+
+def _sim_run_dict(run, graph, cfg) -> dict:
+    """ChildRun 的对拍投影：days/attempts/schedule/events + 全部派生结果。
+
+    fallback_episodes / final_focus 是 ChildRun 的派生方法，Python 算好存进来，
+    TS 侧用自己实现的方法算出同样的东西再对比 —— 派生逻辑本身也要对拍。
+    """
+    return {
+        "key": run.key,
+        "name": run.name,
+        "description": run.description,
+        "entry_focus": run.entry_focus,
+        "days": [
+            {
+                "day": d.day,
+                "focus": d.focus,
+                "due_count": d.due_count,
+                "planned_reviews": d.planned_reviews,
+                "review_attempts": d.review_attempts,
+                "probe_planned": d.probe_planned,
+                "probe_attempts": d.probe_attempts,
+                "notes": list(d.notes),
+                "attempt_ids": [a.attempt_id for a in d.attempts],
+            }
+            for d in run.days
+        ],
+        "attempts": [_sim_attempt_dict(a) for a in run.all_attempts()],
+        "review_attempt_ids": sorted(run.review_attempt_ids),
+        "schedule": run.schedule,
+        "events": run.events,
+        "fallback_episodes": run.fallback_episodes(),
+        "final_focus": run.final_focus(graph, cfg),
+        "final_state": _learner_state_snapshot(run.final_state),
+    }
+
+
+def dump_simulate() -> str:
+    """8 个画像 × 30 天逐 attempt 全量对拍（P3 体检的回归基准）。
+
+    覆盖三块：
+      1. run 本体 —— 每天 DayRecord、每个 attempt、schedule 终态、日终事件
+         （focus_switch/upgrade/fallback）、final_state 快照；
+      2. 派生结果 —— fallback_episodes 合并、final_focus、体检 findings 全文；
+      3. render_report 全文 —— 报告文案逐字对拍。
+    作答建模本身是画像规则（确定性、无外部依赖），它的随机性全部来自
+    random.Random(profile.seed)，同一 seed 两次跑逐字段一致 —— 所以这里
+    不需要"响应抽样"的对拍，跑一遍把结果全部固化即可。
+    """
+    from dataclasses import asdict
+
+    from backend.content.loader import load_bundle
+    from backend.engine.config import load_config
+    from backend.engine.graph import CompetencyGraph
+    from tools.simulate import (
+        PROFILES,
+        SIM_DAYS,
+        render_report,
+        run_cold_start,
+        run_health_checks,
+        run_profile,
+        run_simulation,
+        with_practice_slots,
+    )
+
+    bundle = load_bundle()
+    cfg = load_config(0)
+    graph = CompetencyGraph(bundle)
+
+    sim_bundle, added_slots = with_practice_slots(bundle, cfg)
+    runs = run_simulation(PROFILES, sim_bundle, cfg, graph, SIM_DAYS)
+    cold = run_cold_start(sim_bundle, cfg, graph, SIM_DAYS)
+    findings = run_health_checks(runs + [cold], sim_bundle, graph, cfg)
+
+    return _write(
+        "simulate_parity.json",
+        {
+            "days": SIM_DAYS,
+            "added_slots": added_slots,
+            # 画像声明本身也要对拍 —— TS 的 makeProfiles() 必须与 Python
+            # PROFILES 的 key/seed/entry 逐字段一致，否则整个模拟都在对拍别的孩子
+            "profiles": [
+                {
+                    "key": p.key,
+                    "name": p.name,
+                    "description": p.description,
+                    "seed": p.seed,
+                    "entry": asdict(p.entry),
+                }
+                for p in PROFILES
+            ],
+            "runs": [_sim_run_dict(r, graph, cfg) for r in runs],
+            "cold_start": _sim_run_dict(cold, graph, cfg),
+            "findings": [asdict(f) for f in findings],
+            "report": render_report(runs, findings, sim_bundle, cfg, graph, added_slots, cold),
+        },
+    )
 
 
 def dump_lint() -> str:
@@ -3713,13 +4916,18 @@ DUMPERS = {
     "content": dump_content,
     "cognitive": dump_cognitive,
     "config": dump_config,
+    "detective": dump_detective,
     "engine": dump_engine,
     "graph": dump_graph,
+    "intent": dump_intent,
     "learner": dump_learner,
     "lint": dump_lint,
+    "planner": dump_planner,
     "py": dump_py,
     "pyrandom": dump_pyrandom,
     "replay": dump_replay,
+    "selector": dump_selector,
+    "simulate": dump_simulate,
     "state_machine": dump_state_machine,
 }
 

@@ -119,3 +119,56 @@ export function pyRound(value: number, ndigits: number | null = null): number {
 
   return Number(`${negative ? "-" : ""}${decimalString(rounded, n)}`);
 }
+
+/**
+ * Python `"{:.{d}f}".format(value, d=digits)` 的等价物。
+ *
+ * 与 `pyRound` 的差别在**输出形态**：format 是定点字符串，尾零必须保留
+ * （`"{:.2f}".format(0.5)` → `"0.50"`，而 `round(0.5, 2)` 的 double 打印是 `"0.5"`），
+ * 且 `-0.0` 要输出 `"-0.00"`（format 保留符号，int 化才吞掉负零）。
+ * 舍入语义与 format 一致：CPython 对 double 的**精确十进制展开**做 half-even，
+ * 所以这里复用同一套 BigInt 精确算法，不能走 `toFixed`（half-up，且对
+ * 2.675 那类值先错在乘法）。
+ */
+export function pyFormat(value: number, digits: number): string {
+  if (!Number.isFinite(value)) {
+    // Python 的 "{:.2f}".format(inf/nan) 给 "inf"/"nan"（不带符号位差异：
+    // -inf 输出 "-inf"）
+    return String(value);
+  }
+  const { magnitude, e, negative } = exactParts(value);
+
+  // 精确值 ±m×2^e → 舍到 digits 位小数的整数 q = round_half_even(m×2^e×10^d)
+  let numerator = magnitude * 10n ** BigInt(digits);
+  let denominator = 1n;
+  if (e >= 0) numerator <<= BigInt(e);
+  else denominator <<= BigInt(-e);
+
+  const rounded = denominator === 1n ? numerator : divHalfEven(numerator, denominator);
+  const body = decimalString(rounded, digits);
+  // -0.0 的 rounded 是 0n、decimalString 给 "0.00"，但 Python 要 "-0.00"
+  return `${negative ? "-" : ""}${body}`;
+}
+
+/** Python `"{:+.3f}"` —— 带显式符号位的定点格式化 */
+export function pyFormatSigned(value: number, digits: number): string {
+  const body = pyFormat(Math.abs(value), digits);
+  const sign = value < 0 || Object.is(value, -0) ? "-" : "+";
+  return `${sign}${body}`;
+}
+
+/**
+ * Python `"{:.0%}"` —— 百分号格式化。
+ *
+ * ⚠️ CPython 的 percent 不是"对精确值缩放后舍入"：它**先做 float 乘法
+ * `value * 100`，再对乘积做定点格式化**。0.855 的精确值是
+ * 0.854999...（→ half-even 应得 85%），但 0.855 * 100 的 float 乘积是
+ * 85.50000000000001 → 86%。两侧必须同样先乘后舍，否则差 1%。
+ */
+export function pyFormatPercent(value: number): string {
+  const scaled = value * 100;
+  const body = pyFormat(scaled, 0);
+  // value 无穷时乘积仍是无穷，String(inf)="Infinity" 而 Python 给 "inf"——
+  // percent 列不会遇到，但为对称起见与 pyFormat 保持一致
+  return `${body}%`;
+}

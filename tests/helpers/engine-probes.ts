@@ -266,7 +266,7 @@ const SIGNALS_DESC_DEFAULTS = {
 } as const;
 
 /** 残缺描述 → 完整描述（smStateFromDesc / learnerStateFromDesc 共用） */
-function fullSignalsDesc(partial: Partial<EngineSignalsDesc>): EngineSignalsDesc {
+export function fullSignalsDesc(partial: Partial<EngineSignalsDesc>): EngineSignalsDesc {
   return { ...SIGNALS_DESC_DEFAULTS, ...partial };
 }
 
@@ -411,4 +411,42 @@ export function learnerStateFromDesc(
     state.last_touched_seq.set(code, seq);
   }
   return state;
+}
+
+/** TS 侧状态快照 —— 与 Python `_learner_state_snapshot` 逐字段同构。 */
+export function learnerStateSnapshot(state: ChildLearningState): Record<string, unknown> {
+  return {
+    attempts_seen: state.attempts_seen,
+    assessment_attempts: state.assessment_attempts,
+    competencies: Object.fromEntries(
+      [...state.competencies.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(
+        ([code, s]) => [code, s.toDict()],
+      ),
+    ),
+    patterns: Object.fromEntries(
+      [...state.patterns.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(
+        ([key, s]) => [key, s.toDict()],
+      ),
+    ),
+    misconceptions: Object.fromEntries(
+      [...state.misconceptions.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(
+        ([code, m]) => [
+          code,
+          {
+            hit_count: m.hit_count,
+            last_seq: m.last_seq,
+            resolved: m.resolved,
+            remediation_competency: m.remediation_competency,
+          },
+        ],
+      ),
+    ),
+    recent_attempt_ids: state.recent_attempts.map((a) => a.attempt_id),
+    first_scaffold: Object.fromEntries(
+      [...state.first_scaffold.entries()].sort(([a], [b]) => (a < b ? -1 : 1)),
+    ),
+    last_touched_seq: Object.fromEntries(
+      [...state.last_touched_seq.entries()].sort(([a], [b]) => (a < b ? -1 : 1)),
+    ),
+  };
 }
