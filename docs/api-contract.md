@@ -3,7 +3,8 @@
 > 前端与后端并行开发的唯一接口依据。
 > 契约以本文件为准；如需变更，先改本文件再改两端代码。
 
-Base URL：`/v1`
+Base URL：`/api/v1`（同源 Next.js Route Handler，迁移 S5 起前端与后端同进程）。
+历史路径 `/v1/*` 经 Next rewrites 兼容保留。
 数据格式：JSON（UTF-8）
 认证：MVP 不做账号体系。所有请求通过 `child_id` 指明孩子，缺省使用默认孩子。
 

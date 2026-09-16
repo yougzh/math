@@ -18,3 +18,4 @@
 | [0003](0003-thinking-time-is-not-idle.md) | 思考时间不是无效时间（时间语义冻结） | 已接受 |
 | [0004](0004-attempt-is-the-only-fact-entry.md) | Attempt 是学习系统唯一事实入口 | 已接受 |
 | [0005](0005-detective-attempts-are-not-learning-facts.md) | 侦探答题不是学习事实 | 已接受 |
+| [0006](0006-python-to-typescript-full-migration.md) | Python → TypeScript 全量迁移（fixture 冻结为唯一基准） | 已接受 |

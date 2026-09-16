@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-# 内容工作台快捷入口：./math-content <command>
-# 等价于 python3 -m tools.content_cli <command>
-set -e
-cd "$(dirname "$0")"
-exec python3 -m tools.content_cli "$@"
