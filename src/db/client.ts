@@ -2,8 +2,8 @@
  * 数据库连接 —— 全站唯一的 Pool / Drizzle 实例。
  *
  * ⚠️ 驱动纪律（计划 §五 S4 的 serverless 硬伤 #3）：
- *   - 本地开发与集成测试用 `pg`（TCP）；生产 Vercel + Neon 用
- *     `@neondatabase/serverless` 的 **Pool（WebSocket）** —— 它支持事务。
+ *   - 本地与生产一律用 `pg`（node-postgres）Pool：它支持交互式事务，
+ *     Vercel Node runtime 下直连 Neon（TCP + SSL，配合 Neon pooler 端点）。
  *   - **禁止 neon-http 驱动**：它不支持事务，17 步提交流程会在本地通过、
  *     线上静默失败。这里的 connect() 只接受 pg.PoolClient，neon-http
  *     没有 PoolClient 类型，TypeScript 层就把它挡在外面。
@@ -35,12 +35,19 @@ declare global {
 
 export function getPool(): pg.Pool {
   if (!globalThis.__mathPgPool) {
+    const url = dbUrl();
     globalThis.__mathPgPool = new pg.Pool({
-      connectionString: dbUrl(),
+      connectionString: url,
       max: 10,
       // serverless 环境下空闲连接要及时收（Neon 会断空闲连接）
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 10_000,
+      // 本地嵌入式实例（trust 免密）不开 SSL；连接串带 sslmode=require
+      // 时（Neon 的标准形态）启用 —— rejectUnauthorized: false 是 Neon
+      // 官方对 pg 驱动的推荐配置（其证书链不经公共 CA）
+      ssl: /sslmode=(require|verify-ca|verify-full)/.test(url)
+        ? { rejectUnauthorized: false }
+        : undefined,
     });
   }
   return globalThis.__mathPgPool;
