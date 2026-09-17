@@ -48,6 +48,7 @@ npm run dev        # http://localhost:3000（predev 会先生成内容产物）
 npm test              # vitest 全量回归（对拍 fixture 驱动）
 npm run typecheck     # tsc --noEmit
 npm run build         # 内容构建 + next build
+npm run start         # 本地生产部署（需先 build；同源 API + 本地 PG）
 npx tsx scripts/simulate.ts   # 7 画像 × 30 天模拟体检
 npm run test:e2e      # Playwright e2e smoke（需先 build + start）
 ```
