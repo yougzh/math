@@ -11,6 +11,7 @@
     "build:content": "tsx scripts/build-content.ts",
     "check:content": "tsx scripts/check-content.ts",
     "stats:content": "tsx scripts/check-content.ts --stats",
+    "audit:stories": "tsx scripts/audit-stories.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu22.04-x64 playwright test",
